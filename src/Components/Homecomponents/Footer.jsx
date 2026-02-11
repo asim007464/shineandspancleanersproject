@@ -5,7 +5,7 @@ import { useSiteSettings } from "../../contexts/SiteSettingsContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { location, locationPostcodes, logoUrl } = useSiteSettings();
+  const { location, locationPostcodes, logoUrl, countryDisplayName } = useSiteSettings();
 
   const socialLinks = [
     {
@@ -162,7 +162,7 @@ const Footer = () => {
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">
                   Location
                 </p>
-                <p className="text-slate-800 font-bold">{location}</p>
+                <p className="text-slate-800 font-bold">{countryDisplayName}</p>
               </div>
             </div>
           </div>

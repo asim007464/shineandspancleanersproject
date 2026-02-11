@@ -155,7 +155,7 @@ function ApplicationDetail({ app, referrerProfile, variant = "current" }) {
 const Admin = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, signOut, isAdmin } = useAuth();
-  const { location, locationPostcodes, logoUrl, updateSetting, refresh } = useSiteSettings();
+  const { location, locationPostcodes, logoUrl, country, postcodeLabel, countryOptions, currencySymbol, updateSetting, refresh } = useSiteSettings();
   const [tab, setTab] = useState("users");
   const [users, setUsers] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -404,7 +404,7 @@ const Admin = () => {
     setLocationFormError("");
     try {
       await updateSetting("location", loc.name);
-      await updateSetting("location_full", `${loc.name}, United Kingdom`);
+      await updateSetting("location_full", `${loc.name},`);
       await updateSetting("location_postcodes", loc.postcodes || "");
       refresh();
     } catch (e) {
@@ -963,7 +963,7 @@ const Admin = () => {
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="px-4 sm:px-6 py-3 bg-slate-50 border-b border-gray-200">
                   <p className="text-xs text-slate-600 mb-3">
-                    <strong>Application</strong> = from their application (read-only): Waiting for approval or Working. <strong>Status</strong> = reward lifecycle (you set): Pending → Eligible → Claimed. <strong>Days worked</strong> / <strong>Eligible to claim</strong> / <strong>Claimed</strong> = for the £25 bonus.
+                    <strong>Application</strong> = from their application (read-only): Waiting for approval or Working. <strong>Status</strong> = reward lifecycle (you set): Pending → Eligible → Claimed. <strong>Days worked</strong> / <strong>Eligible to claim</strong> / <strong>Claimed</strong> = for the {currencySymbol}25 bonus.
                   </p>
                   <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                     <input
@@ -1092,11 +1092,23 @@ const Admin = () => {
               <div className="space-y-4 sm:space-y-6">
                 <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                   <h2 className="text-base sm:text-lg font-black text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
-                    <MapPin size={22} className="text-[#448cff] shrink-0" /> Locations & postcodes
+                    <MapPin size={22} className="text-[#448cff] shrink-0" /> Locations & {postcodeLabel}s
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">
-                    Set one location as the site location to update it everywhere on the website.
+                    Set one location as the site location to update it everywhere on the website. Choose country to switch currency and labels.
                   </p>
+                  <div className="mb-4">
+                    <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Country</label>
+                    <select
+                      value={country}
+                      onChange={(e) => updateSetting("country", e.target.value)}
+                      className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 min-w-[200px]"
+                    >
+                      {countryOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <p className="text-xs sm:text-sm font-medium text-slate-700 mb-3 sm:mb-4 break-words">
                     Current site location: <strong>{location}</strong>
                     {locationPostcodes ? ` (${locationPostcodes})` : ""}
@@ -1111,7 +1123,7 @@ const Admin = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Postcodes (e.g. SW19, SW20)"
+                      placeholder={postcodeLabel === "Zipcode" ? "Zipcodes (e.g. 10001, 90210)" : `Postcodes (e.g. SW19, SW20)`}
                       value={locationForm.postcodes}
                       onChange={(e) => setLocationForm((p) => ({ ...p, postcodes: e.target.value }))}
                       className="flex-1 min-w-0 w-full sm:min-w-[200px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
@@ -1144,7 +1156,7 @@ const Admin = () => {
                       <thead className="bg-slate-50 border-b border-gray-200">
                         <tr>
                           <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-black uppercase text-slate-500">Location</th>
-                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-black uppercase text-slate-500">Postcodes</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-black uppercase text-slate-500">{postcodeLabel}s</th>
                           <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-black uppercase text-slate-500">Status</th>
                           <th className="px-4 sm:px-6 py-3 sm:py-4 text-xs font-black uppercase text-slate-500 text-right">Actions</th>
                         </tr>

@@ -1,8 +1,10 @@
 import React, { useEffect } from "react";
 import Navbar from "../Components/Homecomponents/Navbar";
 import Footer from "../Components/Homecomponents/Footer";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 const TermsAndConditions = () => {
+  const { currencySymbol } = useSiteSettings();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -103,11 +105,7 @@ const TermsAndConditions = () => {
               </li>
               <li>
                 <strong>3.3 Rescheduling:</strong> At least 24 hours' notice
-                required. Less notice may incur a £25 fee.
-              </li>
-              <li>
-                <strong>3.4 Access:</strong> If cleaners cannot access the
-                property, the full fee will be charged.
+                required.
               </li>
             </ul>
           </section>
@@ -118,8 +116,8 @@ const TermsAndConditions = () => {
               4. Pricing and Payment
             </h2>
             <p className="mb-6">
-              Pricing is based on service type, size, and duration in British
-              Pounds (£).
+              Pricing is based on service type, size, and duration in the site
+              currency ({currencySymbol}).
             </p>
             <ul className="list-inside list-disc space-y-3 text-center">
               <li>
@@ -128,7 +126,7 @@ const TermsAndConditions = () => {
               </li>
               <li>
                 <strong>Late Payment:</strong> If not received within 7 days, a
-                £15 fee applies.
+                {currencySymbol}15 fee applies.
               </li>
               <li>
                 <strong>Price Changes:</strong> We provide 30 days' notice for
@@ -194,7 +192,7 @@ const TermsAndConditions = () => {
             </p>
             <p className="leading-relaxed mb-4">
               <strong>7.2 Limitation:</strong> Total liability is limited to the
-              cost of service or £1,000, whichever is lower.
+              cost of service or {currencySymbol}1,000, whichever is lower.
             </p>
             <p className="leading-relaxed italic">
               Damage must be reported within 24 hours of service completion.

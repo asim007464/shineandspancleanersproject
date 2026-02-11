@@ -3,11 +3,18 @@ import { supabase } from "../lib/supabase";
 
 const SiteSettingsContext = createContext(null);
 
+const COUNTRY_OPTIONS = [
+  { value: "uk", label: "United Kingdom", currency: "£", postcodeLabel: "Postcode" },
+  { value: "us", label: "United States", currency: "$", postcodeLabel: "Zipcode" },
+  { value: "canada", label: "Canada", currency: "CA$", postcodeLabel: "Postcode" },
+];
+
 export function SiteSettingsProvider({ children }) {
   const [location, setLocationState] = useState("London");
-  const [locationFull, setLocationFullState] = useState("London, United Kingdom");
+  const [locationFull, setLocationFullState] = useState("London");
   const [locationPostcodes, setLocationPostcodesState] = useState("");
   const [logoUrl, setLogoUrlState] = useState("");
+  const [country, setCountryState] = useState("uk");
   const [loading, setLoading] = useState(true);
 
   async function fetchSettings() {
@@ -19,9 +26,11 @@ export function SiteSettingsProvider({ children }) {
     }
     const map = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
     setLocationState(map.location || "London");
-    setLocationFullState(map.location_full || "London, United Kingdom");
+    setLocationFullState(map.location_full || "London");
     setLocationPostcodesState(map.location_postcodes || "");
     setLogoUrlState(map.logo_url || "");
+    const c = (map.country || "uk").toLowerCase();
+    setCountryState(c === "us" || c === "canada" ? c : "uk");
     setLoading(false);
   }
 
@@ -36,13 +45,27 @@ export function SiteSettingsProvider({ children }) {
     if (key === "location_full") setLocationFullState(value);
     if (key === "location_postcodes") setLocationPostcodesState(value);
     if (key === "logo_url") setLogoUrlState(value);
+    if (key === "country") {
+      const c = (value || "uk").toLowerCase();
+      setCountryState(c === "us" || c === "canada" ? c : "uk");
+    }
   }
+
+  const countryInfo = COUNTRY_OPTIONS.find((o) => o.value === country) || COUNTRY_OPTIONS[0];
+  const countryDisplayName = countryInfo.label;
+  const currencySymbol = countryInfo.currency;
+  const postcodeLabel = countryInfo.postcodeLabel;
 
   const value = {
     location,
     locationFull,
     locationPostcodes,
     logoUrl,
+    country,
+    countryDisplayName,
+    currencySymbol,
+    postcodeLabel,
+    countryOptions: COUNTRY_OPTIONS,
     loading: loading,
     updateSetting,
     refresh: fetchSettings,

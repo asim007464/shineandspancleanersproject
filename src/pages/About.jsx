@@ -16,7 +16,7 @@ import Footer from "../Components/Homecomponents/Footer";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 const About = () => {
-  const { location, locationPostcodes } = useSiteSettings();
+  const { location, locationPostcodes, currencySymbol } = useSiteSettings();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -37,7 +37,9 @@ const About = () => {
           <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto opacity-90">
             Are you a dedicated cleaning professional with a passion for
             excellence? We are seeking energetic and reliable self-employed
-            <i>Cleaners</i> to join our progressive team <i>across</i> {location}{locationPostcodes ? ` (${locationPostcodes})` : ""}.
+            <i>Cleaners</i> to join our progressive team <i>across</i>{" "}
+            {location}
+            {locationPostcodes ? ` (${locationPostcodes})` : ""}.
           </p>
         </div>
       </section>
@@ -124,7 +126,7 @@ const About = () => {
             <InfoCard
               icon={<Wallet size={24} />}
               title="Top Pay"
-              desc="Upto 800 pound/week + tips. Get paid the same day you do cleaning."
+              desc={`Upto ${currencySymbol}800/week + tips. Get paid the same day you do cleaning.`}
             />
             <InfoCard
               icon={<Dumbbell size={24} />}

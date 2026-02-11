@@ -10,7 +10,7 @@ import { supabase } from "../lib/supabase";
 const Referral = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
-  const { location, locationPostcodes } = useSiteSettings();
+  const { location, locationPostcodes, currencySymbol } = useSiteSettings();
   const [myReferrals, setMyReferrals] = useState([]);
   const [referralsLoading, setReferralsLoading] = useState(true);
 
@@ -85,7 +85,7 @@ const Referral = () => {
       <section className="bg-white py-20 text-center border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-black text-[#1e293b] mb-4 uppercase tracking-tight leading-tight">
-            Refer & <span className="text-[#448cff]">Earn £25</span>
+            Refer & <span className="text-[#448cff]">Earn {currencySymbol}25</span>
           </h1>
           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed opacity-90">
             <i>Help</i> our professional team and get rewarded. Share your
@@ -120,7 +120,7 @@ const Referral = () => {
               <Step
                 number="04"
                 title="Earn Your Bonus"
-                desc="After they complete 2 months of high-quality service, you receive £25."
+                desc={`After they complete 2 months of high-quality service, you receive ${currencySymbol}25.`}
               />
             </div>
           </div>
