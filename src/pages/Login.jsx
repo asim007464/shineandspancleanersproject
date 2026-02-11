@@ -27,7 +27,7 @@ const Login = () => {
   const showRequireLoginAlert = fromApply || fromReferral;
   const { user, loading: authLoading, signIn } = useAuth();
   const { logoUrl } = useSiteSettings();
-  const logoSrc = logoUrl || "./websitelogo.png";
+  const logoSrc = logoUrl || "/websitelogo.png";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -66,21 +66,30 @@ const Login = () => {
   }
   if (user) return null;
 
+  const loginBgImage = "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1200";
+
   return (
-    <div className="flex h-screen w-full bg-white font-jakarta overflow-hidden">
-      <div className="hidden lg:flex w-1/2 bg-[#0f1216] relative items-center justify-center p-20">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80')",
-          }}
+    <div className="flex min-h-screen lg:h-screen w-full bg-white font-jakarta overflow-x-hidden">
+      <div className="relative hidden w-1/2 lg:block min-h-screen overflow-hidden">
+        <img
+          src={loginBgImage}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
+        <div className="absolute inset-0 bg-[#0f1216]/50" />
+        <div className="absolute left-10 top-10 z-10">
+          <Link to="/">
+            <img src={logoSrc} className="w-[120px] h-auto object-contain" alt="Shine & Span" />
+          </Link>
+        </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 md:px-24 overflow-y-auto">
-        <Link to="/" className="mb-8 flex items-center w-fit">
-          <img src={logoSrc} alt="Shine & Span" className="h-10 w-auto object-contain" />
-        </Link>
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 md:px-24 overflow-y-auto py-10">
+        <div className="lg:hidden mb-8">
+          <Link to="/">
+            <img src={logoSrc} alt="Shine & Span" className="w-[120px] h-auto object-contain" />
+          </Link>
+        </div>
         <button
           onClick={() => navigate("/")}
           className="mb-4 inline-flex items-center text-gray-400 font-bold hover:text-[#448cff] transition-all w-fit"

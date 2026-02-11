@@ -469,7 +469,7 @@ const Admin = () => {
     setLocationFormError("");
   };
 
-  const logoSrc = logoUrl || "./websitelogo.png";
+  const logoSrc = logoUrl || "/websitelogo.png";
 
   return (
     <div className="min-h-screen bg-[#fcfdfe] font-jakarta">

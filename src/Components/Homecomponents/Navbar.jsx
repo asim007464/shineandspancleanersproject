@@ -11,7 +11,7 @@ const Navbar = () => {
   const isApproved = applicationStatus === "approved";
   const showAuthUI = !authLoading;
   const { logoUrl } = useSiteSettings();
-  const logoSrc = logoUrl || "./websitelogo.png";
+  const logoSrc = logoUrl || "/websitelogo.png";
 
   const handleLogout = () => {
     signOut();

@@ -28,8 +28,10 @@ const Signup = () => {
   const redirectToRef = useRef("");
 
   // Strong password: at least 8 chars, one letter, one number
-  const isStrongPassword = (p) => p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
-  const passwordRequirements = "Use a strong password: at least 8 characters, including a letter and a number.";
+  const isStrongPassword = (p) =>
+    p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
+  const passwordRequirements =
+    "Use a strong password: at least 8 characters, including a letter and a number.";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -53,18 +55,24 @@ const Signup = () => {
     }
   }, [searchParams]);
 
-  const redirectTo = searchParams.get("redirect") || redirectToRef.current || "";
+  const redirectTo =
+    searchParams.get("redirect") || redirectToRef.current || "";
 
   useEffect(() => {
     if (!authLoading && user && !isSigningUpRef.current) {
-      navigate(redirectTo && redirectTo !== "/" ? redirectTo : "/", { replace: true });
+      navigate(redirectTo && redirectTo !== "/" ? redirectTo : "/", {
+        replace: true,
+      });
     }
   }, [user, authLoading, navigate, redirectTo]);
 
   // 60-second cooldown timer
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
-    const t = setInterval(() => setCooldownSeconds((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    const t = setInterval(
+      () => setCooldownSeconds((s) => (s <= 1 ? 0 : s - 1)),
+      1000,
+    );
     return () => clearInterval(t);
   }, [cooldownSeconds]);
 
@@ -76,7 +84,9 @@ const Signup = () => {
       return;
     }
     if (!isStrongPassword(password)) {
-      setError("Use a strong password: at least 8 characters, including a letter and a number.");
+      setError(
+        "Use a strong password: at least 8 characters, including a letter and a number.",
+      );
       return;
     }
     isSigningUpRef.current = true;
@@ -97,7 +107,7 @@ const Signup = () => {
 
   const otpRedirectUrl = (emailForUrl, includeRedirect = true) => {
     const base = `${typeof window !== "undefined" ? window.location.origin : ""}/signup?step=3&email=${encodeURIComponent(emailForUrl)}`;
-    const redirect = includeRedirect ? (redirectToRef.current || redirectTo) : "";
+    const redirect = includeRedirect ? redirectToRef.current || redirectTo : "";
     return redirect ? `${base}&redirect=${encodeURIComponent(redirect)}` : base;
   };
 
@@ -162,8 +172,13 @@ const Signup = () => {
       await signOut();
       setSuccess(true);
       const savedRedirect = redirectToRef.current || redirectTo;
-      const redirectParam = savedRedirect ? `?redirect=${encodeURIComponent(savedRedirect)}` : "";
-      setTimeout(() => navigate(`/login${redirectParam}`, { replace: true }), 1500);
+      const redirectParam = savedRedirect
+        ? `?redirect=${encodeURIComponent(savedRedirect)}`
+        : "";
+      setTimeout(
+        () => navigate(`/login${redirectParam}`, { replace: true }),
+        1500,
+      );
     } catch (err) {
       setError(err.message || "Invalid or expired code. Try again.");
     } finally {
@@ -171,7 +186,7 @@ const Signup = () => {
     }
   };
 
-  const logoSrc = logoUrl || "./websitelogo.png";
+  const logoSrc = logoUrl || "/websitelogo.png";
 
   if (authLoading) {
     return (
@@ -182,25 +197,32 @@ const Signup = () => {
   }
   if (user) return null;
 
+  const signupBgImage =
+    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1200";
+
   return (
     <div className="flex min-h-screen lg:h-screen w-full bg-white font-jakarta overflow-x-hidden">
-      <div className="relative hidden w-1/2 lg:block h-full overflow-hidden">
-        <div
-          className="absolute inset-0 h-full w-full bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1581578731548-c64695cc6958?q=80')",
-          }}
+      <div className="relative hidden w-1/2 lg:block min-h-screen overflow-hidden">
+        <img
+          src={signupBgImage}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-[#0f1216]/50" />
-        <div className="absolute left-10 top-10">
-          <img src={logoSrc} className="w-[120px] h-auto object-contain" alt="Logo" />
+        <div className="absolute left-10 top-10 z-10">
+          <img
+            src={logoSrc}
+            className="w-[120px] h-auto object-contain"
+            alt="Shine & Span"
+          />
         </div>
         <div className="absolute bottom-10 left-10 right-10 z-10">
           <h2 className="text-4xl font-black uppercase mb-4 text-white tracking-tight">
             Join the <span className="text-[#448cff]">Team</span>
           </h2>
           <p className="text-gray-200 text-lg font-medium max-w-md leading-relaxed">
-            Create your worker account to manage your profile, set your own schedule, and track your same-day payments.
+            Create your worker account to manage your profile, set your own
+            schedule, and track your same-day payments.
           </p>
           <p className="mt-12 text-xs text-slate-400 font-bold uppercase tracking-widest">
             © 2025 Shine & Span Cleaning Services Ltd
@@ -210,9 +232,22 @@ const Signup = () => {
 
       <div className="flex w-full flex-col items-center justify-center px-6 py-10 lg:w-1/2 lg:px-20 bg-white">
         <div className="w-full max-w-[550px]">
+          <div className="lg:hidden mb-8">
+            <Link to="/">
+              <img
+                src={logoSrc}
+                className="w-[120px] h-auto object-contain"
+                alt="Shine & Span"
+              />
+            </Link>
+          </div>
           <div className="flex items-center justify-between mb-8">
             <Link
-              to={redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login"}
+              to={
+                redirectTo
+                  ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+                  : "/login"
+              }
               className="inline-flex items-center text-xs font-black uppercase tracking-widest text-slate-400 hover:text-[#448cff] transition-all"
             >
               <ArrowLeft size={16} className="mr-2" /> Back to Login
@@ -226,12 +261,19 @@ const Signup = () => {
           </div>
 
           <h1 className="text-3xl font-black uppercase tracking-tight mb-2 text-[#1e293b]">
-            {step === 1 ? "Create Account" : step === 2 ? "Verify your account" : "Enter code"}
+            {step === 1
+              ? "Create Account"
+              : step === 2
+                ? "Verify your account"
+                : "Enter code"}
           </h1>
           <p className="text-slate-500 mb-10 font-medium">
-            {step === 1 && `Join ${location}'s most professional cleaning network.`}
-            {step === 2 && "We'll send an 8-digit code to your email. You can request a new code after 60 seconds."}
-            {step === 3 && `Enter the 8-digit code we sent to ${otpSentTo}. If you closed this page, use the link in the email to return here.`}
+            {step === 1 &&
+              `Join ${location}'s most professional cleaning network.`}
+            {step === 2 &&
+              "We'll send an 8-digit code to your email. You can request a new code after 60 seconds."}
+            {step === 3 &&
+              `Enter the 8-digit code we sent to ${otpSentTo}. If you closed this page, use the link in the email to return here.`}
           </p>
 
           {success ? (
@@ -256,7 +298,11 @@ const Signup = () => {
                   Send code to my email ({email})
                 </button>
               </div>
-              <button type="button" onClick={() => setStep(1)} className="w-full text-slate-500 font-bold text-sm hover:text-[#448cff]">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="w-full text-slate-500 font-bold text-sm hover:text-[#448cff]"
+              >
                 Back to form
               </button>
             </div>
@@ -268,7 +314,9 @@ const Signup = () => {
                 </div>
               )}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">8-digit code</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  8-digit code
+                </label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -284,11 +332,19 @@ const Signup = () => {
                 disabled={loading || otp.length !== 8}
                 className="w-full mt-6 bg-[#448cff] text-white py-5 rounded-sm font-black uppercase tracking-[0.2em] text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : "Verify code"}
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  "Verify code"
+                )}
               </button>
               {cooldownSeconds > 0 ? (
                 <p className="text-slate-500 text-sm font-medium">
-                  Resend code in <span className="font-bold text-[#448cff]">{cooldownSeconds}</span> seconds
+                  Resend code in{" "}
+                  <span className="font-bold text-[#448cff]">
+                    {cooldownSeconds}
+                  </span>{" "}
+                  seconds
                 </p>
               ) : (
                 <button
@@ -300,7 +356,14 @@ const Signup = () => {
                   {loading ? "Sending…" : "Resend code"}
                 </button>
               )}
-              <button type="button" onClick={() => { setStep(2); setSearchParams({}); }} className="w-full text-slate-500 font-bold text-sm hover:text-[#448cff]">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(2);
+                  setSearchParams({});
+                }}
+                className="w-full text-slate-500 font-bold text-sm hover:text-[#448cff]"
+              >
                 Send code to a different email
               </button>
             </form>
@@ -313,7 +376,9 @@ const Signup = () => {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">First Name</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     value={firstName}
@@ -323,7 +388,9 @@ const Signup = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Last Name</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     value={lastName}
@@ -334,7 +401,9 @@ const Signup = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Address</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   required
@@ -345,7 +414,9 @@ const Signup = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Password</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  Password
+                </label>
                 <input
                   type="password"
                   required
@@ -360,7 +431,9 @@ const Signup = () => {
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Confirm Password</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                  Confirm Password
+                </label>
                 <input
                   type="password"
                   required
@@ -375,7 +448,11 @@ const Signup = () => {
                 disabled={loading}
                 className="w-full mt-6 bg-[#448cff] text-white py-5 rounded-sm font-black uppercase tracking-[0.2em] text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : "Register Account"}
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  "Register Account"
+                )}
               </button>
             </form>
           )}
@@ -383,7 +460,14 @@ const Signup = () => {
           <div className="mt-10 pt-8 border-t border-slate-100 text-center">
             <p className="text-sm text-slate-400 font-medium">
               Already have an account?{" "}
-              <Link to={redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login"} className="text-[#448cff] font-black underline hover:text-blue-800 transition-colors">
+              <Link
+                to={
+                  redirectTo
+                    ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+                    : "/login"
+                }
+                className="text-[#448cff] font-black underline hover:text-blue-800 transition-colors"
+              >
                 Sign In here
               </Link>
             </p>
