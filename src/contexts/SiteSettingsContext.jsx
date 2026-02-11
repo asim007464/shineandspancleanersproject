@@ -4,9 +4,9 @@ import { supabase } from "../lib/supabase";
 const SiteSettingsContext = createContext(null);
 
 const COUNTRY_OPTIONS = [
-  { value: "uk", label: "United Kingdom", currency: "£", postcodeLabel: "Postcode" },
-  { value: "us", label: "United States", currency: "$", postcodeLabel: "Zipcode" },
-  { value: "canada", label: "Canada", currency: "CA$", postcodeLabel: "Postcode" },
+  { value: "uk", label: "United Kingdom", currency: "£", postcodeLabel: "Postcode", postcodePlaceholder: "e.g. SW1A 1AA", phonePlaceholder: "07xxx xxxxxx", phoneHelper: "UK: 10–11 digits.", addressPlaceholder: "e.g. 123 High Street, Flat 4, London" },
+  { value: "us", label: "United States", currency: "$", postcodeLabel: "ZIP Code", postcodePlaceholder: "e.g. 12345 or 12345-6789", phonePlaceholder: "(555) 123-4567", phoneHelper: "US: 10 digits.", addressPlaceholder: "e.g. 123 Main St, New York, NY" },
+  { value: "canada", label: "Canada", currency: "CA$", postcodeLabel: "Postal Code", postcodePlaceholder: "e.g. K1A 0B1", phonePlaceholder: "(555) 123-4567", phoneHelper: "Canada: 10 digits.", addressPlaceholder: "e.g. 123 Main St, Toronto, ON" },
 ];
 
 export function SiteSettingsProvider({ children }) {
@@ -55,6 +55,10 @@ export function SiteSettingsProvider({ children }) {
   const countryDisplayName = countryInfo.label;
   const currencySymbol = countryInfo.currency;
   const postcodeLabel = countryInfo.postcodeLabel;
+  const postcodePlaceholder = countryInfo.postcodePlaceholder || "e.g. SW1A 1AA";
+  const phonePlaceholder = countryInfo.phonePlaceholder || "07xxx xxxxxx";
+  const phoneHelper = countryInfo.phoneHelper || "10–11 digits.";
+  const addressPlaceholder = countryInfo.addressPlaceholder || "e.g. 123 High Street, Flat 4, London";
 
   const value = {
     location,
@@ -65,6 +69,10 @@ export function SiteSettingsProvider({ children }) {
     countryDisplayName,
     currencySymbol,
     postcodeLabel,
+    postcodePlaceholder,
+    phonePlaceholder,
+    phoneHelper,
+    addressPlaceholder,
     countryOptions: COUNTRY_OPTIONS,
     loading: loading,
     updateSetting,

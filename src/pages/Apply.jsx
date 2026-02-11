@@ -31,7 +31,7 @@ const Apply = () => {
     typeof sessionStorage !== "undefined" ? sessionStorage.getItem(APPLY_REFERRAL_STORAGE_KEY) : null;
   const refCode = refFromUrl || refFromStorage || "";
   const { user, loading: authLoading, isAdmin, refreshApplicationStatus } = useAuth();
-  const { location, locationPostcodes } = useSiteSettings();
+  const { location, locationPostcodes, country, postcodeLabel, postcodePlaceholder, phonePlaceholder, phoneHelper, addressPlaceholder } = useSiteSettings();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -48,6 +48,7 @@ const Apply = () => {
     phone: "",
     email: "",
     postcode: "",
+    address: "",
     referralCode: "",
     experienceLevel: "",
     experienceTypes: [],
@@ -254,13 +255,22 @@ const Apply = () => {
 
   const updatePhone = (value) => {
     const digitsOnly = value.replace(/\D/g, "");
-    const limited = digitsOnly.slice(0, 11);
+    const maxLen = country === "uk" ? 11 : 10;
+    const limited = digitsOnly.slice(0, maxLen);
     setFormData((prev) => ({ ...prev, phone: limited }));
   };
 
   const updatePostcode = (value) => {
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").slice(0, 8);
-    setFormData((prev) => ({ ...prev, postcode: cleaned }));
+    if (country === "us") {
+      const cleaned = value.replace(/[^0-9-]/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, postcode: cleaned }));
+    } else if (country === "canada") {
+      const cleaned = value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").slice(0, 7);
+      setFormData((prev) => ({ ...prev, postcode: cleaned }));
+    } else {
+      const cleaned = value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").slice(0, 8);
+      setFormData((prev) => ({ ...prev, postcode: cleaned }));
+    }
   };
 
   // Effective referral code: optional form input or URL ref; uppercase for DB lookup
@@ -275,8 +285,14 @@ const Apply = () => {
     const errors = [];
     if (!availabilityOnlyUpdate) {
       const phoneDigits = formData.phone.replace(/\D/g, "");
-      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-        errors.push("Please enter a valid UK phone number (10–11 digits).");
+      if (country === "uk") {
+        if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+          errors.push("Please enter a valid UK phone number (10–11 digits).");
+        }
+      } else {
+        if (phoneDigits.length !== 10) {
+          errors.push(country === "us" ? "Please enter a valid US phone number (10 digits)." : "Please enter a valid Canadian phone number (10 digits).");
+        }
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!formData.email.trim()) {
@@ -284,11 +300,29 @@ const Apply = () => {
       } else if (!emailRegex.test(formData.email.trim())) {
         errors.push("Please enter a valid email address.");
       }
-      const ukPostcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+      const pc = formData.postcode.trim().replace(/\s+/g, " ");
       if (!formData.postcode.trim()) {
-        errors.push("UK postcode is required.");
-      } else if (!ukPostcodeRegex.test(formData.postcode.trim().replace(/\s+/g, " "))) {
-        errors.push("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+        errors.push(`${postcodeLabel} is required.`);
+      } else if (country === "uk") {
+        const ukPostcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+        if (!ukPostcodeRegex.test(pc)) {
+          errors.push("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+        }
+      } else if (country === "us") {
+        const usZipRegex = /^\d{5}(-\d{4})?$/;
+        if (!usZipRegex.test(formData.postcode.trim())) {
+          errors.push("Please enter a valid US ZIP code (e.g. 12345 or 12345-6789).");
+        }
+      } else if (country === "canada") {
+        const canadaPostalRegex = /^[A-Z]\d[A-Z]\d[A-Z]\d$/i;
+        if (!canadaPostalRegex.test(pc.replace(/\s/g, ""))) {
+          errors.push("Please enter a valid Canadian postal code (e.g. K1A 0B1).");
+        }
+      }
+      if (!formData.address.trim()) {
+        errors.push("Address is required.");
+      } else if (formData.address.trim().length < 10) {
+        errors.push("Please enter a full address (at least 10 characters).");
       }
     }
     const days = Object.keys(formData.availability);
@@ -770,12 +804,13 @@ const Apply = () => {
                           </div>
                         </div>
                         <InputGroup
-                          label="Mobile Number * (UK only)"
+                          label={`Phone Number * (${country === "uk" ? "UK" : country === "us" ? "US" : "Canada"})`}
                           value={formData.phone}
                           onChange={updatePhone}
                           type="tel"
                           inputMode="numeric"
-                          placeholder="07xxx xxxxxx"
+                          placeholder={phonePlaceholder}
+                          helper={phoneHelper}
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -790,15 +825,34 @@ const Apply = () => {
                             className="w-full p-4 border border-gray-400 rounded-sm outline-none bg-slate-50 font-bold text-slate-700 cursor-not-allowed"
                           />
                           <p className="text-xs text-slate-500 font-medium">
-                            Your application uses your account email only. UK postcode and UK phone number required.
+                            Your application uses your account email only. {postcodeLabel} and phone number required for your region.
                           </p>
                         </div>
                         <InputGroup
-                          label="Post Code * (UK only)"
+                          label={`${postcodeLabel} *`}
                           value={formData.postcode}
                           onChange={updatePostcode}
-                          placeholder="e.g. SW1A 1AA"
+                          placeholder={postcodePlaceholder}
                         />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.address}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value.trimStart() }))}
+                          placeholder={addressPlaceholder}
+                          className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] font-medium text-slate-800 placeholder-slate-400"
+                          maxLength={200}
+                        />
+                        <p className="text-xs text-slate-500 font-medium">
+                          Your full residential address (street, building, city). Required for your application.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1">
                           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
                             Referral code (optional)
@@ -1183,7 +1237,7 @@ const StepLink = ({ number, label, active }) => (
   </div>
 );
 
-const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputMode }) => (
+const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputMode, helper }) => (
   <div className="space-y-2 w-full">
     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
       {label}
@@ -1196,6 +1250,7 @@ const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputM
       onChange={(e) => onChange(e.target.value)}
       className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] transition-all font-bold text-slate-700 bg-white"
     />
+    {helper && <p className="text-xs text-slate-500 font-medium">{helper}</p>}
   </div>
 );
 
