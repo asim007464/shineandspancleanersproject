@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 -- Insert defaults
 INSERT INTO public.site_settings (key, value) VALUES
   ('location', 'London'),
-  ('location_full', 'London, United Kingdom'),
+  ('location_full', 'London'),
   ('logo_url', '')
 ON CONFLICT (key) DO NOTHING;
 

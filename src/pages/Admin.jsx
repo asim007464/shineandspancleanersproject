@@ -891,7 +891,7 @@ const Admin = () => {
                                       <span className="h-1.5 w-1.5 rounded-full bg-[#448cff] shrink-0" aria-hidden />
                                       <span className="text-xs font-semibold text-blue-800 tracking-wide">Current application</span>
                                     </div>
-                                    <div className="px-5 pb-5 bg-white/50">
+                                    <div className="px-5 pt-5 pb-5 bg-white/50">
                                       {latestApp && (
                                         <>
                                           {renderAppRow(latestApp, true)}

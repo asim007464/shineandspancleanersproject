@@ -5,7 +5,7 @@ import { useSiteSettings } from "../../contexts/SiteSettingsContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { location, locationFull, locationPostcodes, logoUrl } = useSiteSettings();
+  const { location, locationPostcodes, logoUrl } = useSiteSettings();
 
   const socialLinks = [
     {
@@ -42,7 +42,11 @@ const Footer = () => {
         <div className="space-y-8">
           <Link to="/" className="flex items-center">
             {logoUrl ? (
-              <img src={logoUrl} alt="Shine & Span" className="h-10 w-auto object-contain" />
+              <img
+                src={logoUrl}
+                alt="Shine & Span"
+                className="h-10 w-auto object-contain"
+              />
             ) : (
               <span className="text-xl font-black text-[#1e293b] tracking-tight">
                 Shine <span className="text-[#448cff]">&</span> Span
@@ -50,8 +54,9 @@ const Footer = () => {
             )}
           </Link>
           <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm font-medium">
-            {location}{locationPostcodes ? ` (${locationPostcodes})` : ""}'s premier platform for cleaning professionals.{" "}
-            <i>offering</i>
+            {location}
+            {locationPostcodes ? ` (${locationPostcodes})` : ""}'s premier
+            platform for cleaning professionals. <i>offering</i>
             flexible hours, top industry pay, and a supportive community for our
             self-employed team members.
           </p>
@@ -157,9 +162,7 @@ const Footer = () => {
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">
                   Location
                 </p>
-                <p className="text-slate-800 font-bold">
-                  {locationFull}
-                </p>
+                <p className="text-slate-800 font-bold">{location}</p>
               </div>
             </div>
           </div>
