@@ -1,9 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { useSiteSettings } from "../../contexts/SiteSettingsContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { location, locationFull, locationPostcodes, logoUrl } = useSiteSettings();
 
   const socialLinks = [
     {
@@ -39,12 +41,16 @@ const Footer = () => {
         {/* --- COLUMN 1: BRAND & SOCIALS --- */}
         <div className="space-y-8">
           <Link to="/" className="flex items-center">
-            <span className=" text-xl font-black text-[#1e293b] tracking-tight">
-              Shine <span className="text-[#448cff]">&</span> Span
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Shine & Span" className="h-10 w-auto object-contain" />
+            ) : (
+              <span className="text-xl font-black text-[#1e293b] tracking-tight">
+                Shine <span className="text-[#448cff]">&</span> Span
+              </span>
+            )}
           </Link>
           <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm font-medium">
-            London's premier platform for cleaning professionals.{" "}
+            {location}{locationPostcodes ? ` (${locationPostcodes})` : ""}'s premier platform for cleaning professionals.{" "}
             <i>offering</i>
             flexible hours, top industry pay, and a supportive community for our
             self-employed team members.
@@ -152,7 +158,7 @@ const Footer = () => {
                   Location
                 </p>
                 <p className="text-slate-800 font-bold">
-                  London, United Kingdom
+                  {locationFull}
                 </p>
               </div>
             </div>

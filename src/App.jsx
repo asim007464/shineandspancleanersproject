@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // --- Components ---
 import Footer from "./Components/Homecomponents/Footer";
 import ScrollToTop from "./ScrollToTop";
-import ChatBox from "./Components/Homecomponents/ChatBox";
 // --- Pages ---
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -13,10 +12,13 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Apply from "./pages/Apply";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Referral from "./pages/Referral";
 import Signup from "./pages/Signup";
 import WebsiteGuard from "./pages/WebsiteGuard";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import Admin from "./pages/Admin";
 const App = () => {
   return (
     <Router>
@@ -38,11 +40,13 @@ const App = () => {
           <Route path="/apply" element={<Apply />} />
           {/* Worker Login: Separate from Apply Now */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/TermsAndConditions" element={<TermsAndConditions />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </div>
-      <ChatBox></ChatBox>
     </Router>
   );
 };

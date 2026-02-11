@@ -8,15 +8,15 @@ import {
   Smartphone,
   Briefcase,
   User,
-  Heart,
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
 import Navbar from "../Components/Homecomponents/Navbar";
 import Footer from "../Components/Homecomponents/Footer";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 const About = () => {
-  // Reset scroll to top on page load
+  const { location, locationPostcodes } = useSiteSettings();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -37,7 +37,7 @@ const About = () => {
           <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto opacity-90">
             Are you a dedicated cleaning professional with a passion for
             excellence? We are seeking energetic and reliable self-employed
-            <i>Cleaners</i> to join our progressive team <i>across</i> London.
+            <i>Cleaners</i> to join our progressive team <i>across</i> {location}{locationPostcodes ? ` (${locationPostcodes})` : ""}.
           </p>
         </div>
       </section>

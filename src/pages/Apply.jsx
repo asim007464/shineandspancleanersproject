@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Check,
   Clock,
@@ -7,48 +8,37 @@ import {
   Mail,
   MapPin,
   Sparkles,
-  Info,
   Briefcase,
   Smartphone,
   ChevronRight,
   CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import Navbar from "../Components/Homecomponents/Navbar";
 import Footer from "../Components/Homecomponents/Footer";
+import { supabase } from "../lib/supabase";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
+import { useAuth } from "../contexts/AuthContext";
+
+const APPLY_REFERRAL_STORAGE_KEY = "apply_referral_ref";
 
 const Apply = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const refFromUrl = searchParams.get("ref") || "";
+  const refFromStorage =
+    typeof sessionStorage !== "undefined" ? sessionStorage.getItem(APPLY_REFERRAL_STORAGE_KEY) : null;
+  const refCode = refFromUrl || refFromStorage || "";
+  const { user, loading: authLoading, isAdmin, refreshApplicationStatus } = useAuth();
+  const { location, locationPostcodes } = useSiteSettings();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [activeSection, setActiveSection] = useState("section-1");
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-
-    if (!isSubmitted) {
-      const observerOptions = {
-        root: null,
-        rootMargin: "-20% 0px -70% 0px",
-        threshold: 0,
-      };
-
-      const observerCallback = (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        });
-      };
-
-      const observer = new IntersectionObserver(
-        observerCallback,
-        observerOptions,
-      );
-      const sections = document.querySelectorAll("section[id]");
-      sections.forEach((section) => observer.observe(section));
-
-      return () => sections.forEach((section) => observer.unobserve(section));
-    }
-  }, [isSubmitted]);
-
+  const [myApplication, setMyApplication] = useState(null);
+  const [loadingMyApp, setLoadingMyApp] = useState(true);
+  const [requestUpdate, setRequestUpdate] = useState(false);
   // --- FORM STATE (Fixed: Added otherExperienceTypes) ---
   const [formData, setFormData] = useState({
     firstName: "",
@@ -58,6 +48,7 @@ const Apply = () => {
     phone: "",
     email: "",
     postcode: "",
+    referralCode: "",
     experienceLevel: "",
     experienceTypes: [],
     otherExperienceTypes: [], // Added this array for the checkboxes
@@ -134,6 +125,112 @@ const Apply = () => {
     },
   });
 
+  // Persist ref in sessionStorage when in URL; restore from sessionStorage when redirect dropped it (e.g. after signup → login → apply)
+  useEffect(() => {
+    if (refFromUrl.trim()) {
+      try {
+        sessionStorage.setItem(APPLY_REFERRAL_STORAGE_KEY, refFromUrl.trim());
+      } catch {
+        // ignore storage errors
+      }
+      return;
+    }
+    if (refFromStorage?.trim()) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("ref", refFromStorage.trim());
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [refFromUrl, refFromStorage, setSearchParams]);
+
+  // Require login; admins cannot use Apply (they're not applicants)
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      let returnPath = `/apply${window.location.search || ""}`;
+      if (!refFromUrl && refFromStorage?.trim())
+        returnPath = `/apply?ref=${encodeURIComponent(refFromStorage.trim())}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`, {
+        replace: true,
+        state: { requireLogin: true, from: "apply" },
+      });
+      return;
+    }
+    if (isAdmin) {
+      navigate("/", { replace: true });
+      return;
+    }
+  }, [user, authLoading, isAdmin, navigate, refFromUrl, refFromStorage]);
+
+  // Fetch current user's latest application (direct by user_id so new accounts never see someone else's)
+  useEffect(() => {
+    if (!user?.id) {
+      queueMicrotask(() => setLoadingMyApp(false));
+      setMyApplication(null);
+      return;
+    }
+    let cancelled = false;
+    queueMicrotask(() => setLoadingMyApp(true));
+    (async () => {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) {
+        if (error) {
+          setMyApplication(null);
+          setLoadingMyApp(false);
+          return;
+        }
+        setMyApplication(data ?? null);
+        refreshApplicationStatus();
+        setLoadingMyApp(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, refreshApplicationStatus]);
+
+  // Keep form email in sync with login email (application must use own account email)
+  useEffect(() => {
+    if (!user?.email) return;
+    if (myApplication?.status === "approved" && requestUpdate) return;
+    setFormData((prev) => ({ ...prev, email: user.email }));
+  }, [user?.email, myApplication?.status, requestUpdate]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    if (!isSubmitted) {
+      const sectionIds = ["section-1", "section-2", "section-3", "section-4", "section-5"];
+      const triggerOffset = 200;
+
+      const onScroll = () => {
+        const sections = sectionIds
+          .map((id) => document.getElementById(id))
+          .filter(Boolean);
+        let current = sectionIds[0];
+        for (const el of sections) {
+          const top = el.getBoundingClientRect().top;
+          if (top <= triggerOffset) current = el.id;
+        }
+        setActiveSection(current);
+      };
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+      return () => window.removeEventListener("scroll", onScroll);
+    }
+  }, [isSubmitted]);
+
   const timeOptions = [
     "07:00",
     "08:00",
@@ -155,6 +252,68 @@ const Apply = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const updatePhone = (value) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    const limited = digitsOnly.slice(0, 11);
+    setFormData((prev) => ({ ...prev, phone: limited }));
+  };
+
+  const updatePostcode = (value) => {
+    const cleaned = value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").slice(0, 8);
+    setFormData((prev) => ({ ...prev, postcode: cleaned }));
+  };
+
+  // Effective referral code: optional form input or URL ref; uppercase for DB lookup
+  const getEffectiveReferralCode = () => {
+    const fromForm = formData.referralCode && formData.referralCode.trim();
+    const fromRef = refCode && refCode.trim();
+    const raw = fromForm || fromRef || "";
+    return raw ? raw.trim().toUpperCase() : "";
+  };
+
+  const validateForm = () => {
+    const errors = [];
+    if (!availabilityOnlyUpdate) {
+      const phoneDigits = formData.phone.replace(/\D/g, "");
+      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+        errors.push("Please enter a valid UK phone number (10–11 digits).");
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formData.email.trim()) {
+        errors.push("Email is required.");
+      } else if (!emailRegex.test(formData.email.trim())) {
+        errors.push("Please enter a valid email address.");
+      }
+      const ukPostcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+      if (!formData.postcode.trim()) {
+        errors.push("UK postcode is required.");
+      } else if (!ukPostcodeRegex.test(formData.postcode.trim().replace(/\s+/g, " "))) {
+        errors.push("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+      }
+    }
+    const days = Object.keys(formData.availability);
+    for (const day of days) {
+      if (!formData.availability[day].enabled) continue;
+      const a = formData.availability[day];
+      const hasMorning = a.s1_start && a.s1_end;
+      const hasAfternoon = a.s2_start && a.s2_end;
+      const hasEvening = a.s3_start && a.s3_end;
+      if (!hasMorning && !hasAfternoon && !hasEvening) {
+        errors.push(`${day}: choose at least one slot (Morning, Afternoon or Evening) and set both Start and End times.`);
+      }
+      if (hasMorning && a.s1_end <= a.s1_start) {
+        errors.push(`${day} Morning: End time must be after Start time.`);
+      }
+      if (hasAfternoon && a.s2_end <= a.s2_start) {
+        errors.push(`${day} Afternoon: End time must be after Start time.`);
+      }
+      if (hasEvening && a.s3_end <= a.s3_start) {
+        errors.push(`${day} Evening: End time must be after Start time.`);
+      }
+    }
+    return errors;
+  };
+
   const toggleExpType = (type) => {
     const current = formData.experienceTypes;
     const updated = current.includes(type)
@@ -173,13 +332,17 @@ const Apply = () => {
   };
 
   const updateAvailability = (day, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      availability: {
-        ...prev.availability,
-        [day]: { ...prev.availability[day], [field]: value },
-      },
-    }));
+    setFormData((prev) => {
+      const next = { ...prev.availability[day], [field]: value };
+      if (field === "s1_start" || field === "s2_start" || field === "s3_start") {
+        const endKey = field.replace("_start", "_end");
+        if (next[endKey] && value && next[endKey] <= value) next[endKey] = "";
+      }
+      return {
+        ...prev,
+        availability: { ...prev.availability, [day]: next },
+      };
+    });
   };
 
   const updateEligibility = (field) => {
@@ -189,11 +352,115 @@ const Apply = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const availabilityOnlyUpdate =
+    myApplication?.status === "approved" && requestUpdate;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setSubmitError(validationErrors.join(" "));
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+      return;
+    }
+    setSubmitLoading(true);
+    if (!availabilityOnlyUpdate) {
+      const { data: taken } = await supabase.rpc("check_application_email_phone_taken", {
+        check_email: formData.email.trim(),
+        check_phone: formData.phone,
+      });
+      if (taken) {
+        setSubmitLoading(false);
+        setSubmitError(
+          "This email or phone number is already used on another account's application. Please use the email and phone for the account you're logged in with."
+        );
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+        return;
+      }
+    }
+    let referrerId = null;
+    // One referral per person: if this user already has any application with a referrer, keep that referrer (ignore new ref)
+    if (availabilityOnlyUpdate && myApplication?.referrer_id) {
+      referrerId = myApplication.referrer_id;
+    } else {
+      const { data: prevWithRef } = await supabase
+        .from("applications")
+        .select("referrer_id")
+        .eq("user_id", user.id)
+        .not("referrer_id", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (prevWithRef?.referrer_id) {
+        referrerId = prevWithRef.referrer_id;
+      } else {
+        const codeToUse = getEffectiveReferralCode();
+        if (codeToUse && !availabilityOnlyUpdate) {
+          const { data: referrer } = await supabase.rpc("get_referrer_by_referral_code", {
+            p_code: codeToUse,
+          }).maybeSingle();
+          if (referrer?.id) referrerId = referrer.id;
+        }
+      }
+    }
+    // Approved cleaner can only update availability; keep rest from existing application
+    const payloadFormData = availabilityOnlyUpdate
+      ? { ...myApplication.form_data, availability: formData.availability }
+      : { ...formData, email: user.email };
+    const { data: inserted, error } = await supabase
+      .from("applications")
+      .insert({
+        form_data: payloadFormData,
+        referrer_id: availabilityOnlyUpdate
+          ? (myApplication?.referrer_id ?? null)
+          : referrerId,
+        user_id: user.id,
+        status: "pending",
+      })
+      .select("id, status, created_at")
+      .single();
+    setSubmitLoading(false);
+    if (error) {
+      setSubmitError(error.message || "Failed to submit. Please try again.");
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+      return;
+    }
+    if (inserted?.id && referrerId && !availabilityOnlyUpdate) {
+      await supabase.rpc("ensure_referral_for_application", { p_application_id: inserted.id });
+    }
+    setMyApplication(inserted ? { ...inserted, form_data: formData } : null);
     setIsSubmitted(true);
+    if (requestUpdate) setRequestUpdate(false);
     window.scrollTo(0, 0);
   };
+
+  const appStatus = myApplication?.status || "pending";
+  const showForm =
+    !myApplication ||
+    (appStatus === "approved" && requestUpdate) ||
+    (appStatus === "rejected" && requestUpdate);
+  const showPending = !!myApplication && appStatus === "pending" && !isSubmitted;
+  const showApproved = !!myApplication && appStatus === "approved" && !requestUpdate;
+  const showRejected = !!myApplication && appStatus === "rejected" && !requestUpdate;
+
+  const handleRequestUpdate = () => {
+    const fd = myApplication?.form_data || {};
+    setFormData((prev) => ({
+      ...prev,
+      ...fd,
+      availability: { ...prev.availability, ...(fd.availability || {}) },
+      eligibility: { ...prev.eligibility, ...(fd.eligibility || {}) },
+    }));
+    setRequestUpdate(true);
+  };
+
+  if (authLoading || !user || isAdmin || loadingMyApp) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#448cff]" size={40} />
+      </div>
+    );
+  }
 
   return (
     <div className="font-jakarta bg-[#fcfdfe]">
@@ -203,7 +470,17 @@ const Apply = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-8">
             <span className="inline-block px-5 py-2 rounded-full border border-blue-500/20 bg-blue-50 text-[#448cff] text-[11px] font-black uppercase tracking-[0.3em]">
-              {isSubmitted ? "Application Complete" : "Recruitment Portal"}
+              {isSubmitted
+                ? "Application Complete"
+                : showApproved
+                  ? "Approved"
+                  : showPending
+                    ? "Under Review"
+                    : showRejected
+                      ? "Not Approved"
+                      : availabilityOnlyUpdate
+                        ? "Update availability"
+                        : "Recruitment Portal"}
             </span>
           </div>
           <h1 className="text-4xl md:text-7xl font-black text-[#1e293b] uppercase tracking-tight leading-tight">
@@ -211,18 +488,42 @@ const Apply = () => {
               <>
                 Thank <span className="text-[#448cff]">You!</span>
               </>
+            ) : showApproved ? (
+              <>
+                You are <span className="text-[#448cff]">approved</span>
+              </>
+            ) : showPending ? (
+              <>
+                Application <span className="text-[#448cff]">under review</span>
+              </>
+            ) : showRejected ? (
+              <>
+                Application <span className="text-red-600">not approved</span>
+              </>
+            ) : availabilityOnlyUpdate ? (
+              <>
+                Update your <span className="text-[#448cff]">availability</span>
+              </>
             ) : (
               <>
                 Job <span className="text-[#448cff]">application</span>
               </>
             )}
           </h1>
-          {!isSubmitted && (
-            <p className="mt-8 text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed opacity-90">
-              Join London's most progressive cleaning team. We value excellence,
-              reliability, and hard work.
+          {availabilityOnlyUpdate && (
+            <p className="mt-6 text-slate-500 text-base md:text-lg font-medium max-w-xl mx-auto leading-relaxed">
+              Change the days and times you can work. Submit to send for review.
             </p>
           )}
+          {(showForm || !myApplication) &&
+            !isSubmitted &&
+            !showRejected &&
+            !availabilityOnlyUpdate && (
+              <p className="mt-8 text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed opacity-90">
+                Join {location}{locationPostcodes ? ` (${locationPostcodes})` : ""}'s most progressive cleaning team. We value
+                excellence, reliability, and hard work.
+              </p>
+            )}
         </div>
       </section>
 
@@ -248,254 +549,425 @@ const Apply = () => {
               </button>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-            <div className="hidden lg:block lg:col-span-4 space-y-8 sticky top-32 h-fit">
-              <div className="bg-white border border-gray-300 p-8 rounded-sm shadow-sm">
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6 border-b border-gray-100 pb-4">
-                  Application Progress
-                </h3>
-                <nav className="space-y-6">
-                  <StepLink
-                    number="01"
-                    label="Personal Details"
-                    active={activeSection === "section-1"}
-                  />
-                  <StepLink
-                    number="02"
-                    label="Experience & Skills"
-                    active={activeSection === "section-2"}
-                  />
-                  <StepLink
-                    number="03"
-                    label="Weekly Availability"
-                    active={activeSection === "section-3"}
-                  />
-                  <StepLink
-                    number="04"
-                    label="Eligibility Check"
-                    active={activeSection === "section-4"}
-                  />
-                  <StepLink
-                    number="05"
-                    label="Standards"
-                    active={activeSection === "section-5"}
-                  />
-                </nav>
+        ) : showPending ? (
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+              <div className="w-20 h-20 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-100">
+                <Clock size={40} strokeWidth={2} />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3">
+                We are checking your profile
+              </h2>
+              <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-md mx-auto">
+                Your application has been received. Our team will review your
+                details and get back to you. You will see an approval status
+                here once confirmed.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="bg-[#448cff] text-white px-8 py-3 rounded-sm font-black uppercase text-sm hover:bg-blue-700 transition-all"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        ) : showApproved ? (
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white border border-green-200 rounded-xl p-12 text-center shadow-sm bg-green-50/30">
+              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-200">
+                <CheckCircle2 size={40} strokeWidth={2} />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3">
+                Confirmed — you are approved
+              </h2>
+              <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-md mx-auto">
+                Your profile has been approved. You can request an update to
+                your details below; any changes will need to be reviewed and
+                approved again.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  type="button"
+                  onClick={handleRequestUpdate}
+                  className="bg-[#448cff] text-white px-8 py-3 rounded-sm font-black uppercase text-sm hover:bg-blue-700 transition-all"
+                >
+                  Request an update
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="border border-gray-300 text-slate-700 px-8 py-3 rounded-sm font-black uppercase text-sm hover:bg-slate-50 transition-all"
+                >
+                  Back to Home
+                </button>
               </div>
             </div>
+          </div>
+        ) : showRejected ? (
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white border border-red-200 rounded-xl p-12 text-center shadow-sm bg-red-50/30">
+              <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-200">
+                <XCircle size={40} strokeWidth={2} />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3">
+                Application not approved
+              </h2>
+              <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-md mx-auto">
+                Unfortunately your application was not approved this time. You
+                can submit a new application below if your details have changed,
+                and we will review it again.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  type="button"
+                  onClick={handleRequestUpdate}
+                  className="bg-[#448cff] text-white px-8 py-3 rounded-sm font-black uppercase text-sm hover:bg-blue-700 transition-all"
+                >
+                  Submit new application
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="border border-gray-300 text-slate-700 px-8 py-3 rounded-sm font-black uppercase text-sm hover:bg-slate-50 transition-all"
+                >
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : showForm ? (
+          <div
+            className={
+              availabilityOnlyUpdate
+                ? "grid grid-cols-1 gap-16"
+                : "grid grid-cols-1 lg:grid-cols-12 gap-16"
+            }
+          >
+            {!availabilityOnlyUpdate && (
+              <div className="hidden lg:block lg:col-span-4 lg:order-first space-y-8 sticky top-32 h-fit">
+                <div className="bg-white border border-gray-300 p-8 rounded-sm shadow-sm">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-6 border-b border-gray-100 pb-4">
+                    Application Progress
+                  </h3>
+                  <nav className="space-y-6">
+                    <StepLink
+                      number="01"
+                      label="Personal Details"
+                      active={activeSection === "section-1"}
+                    />
+                    <StepLink
+                      number="02"
+                      label="Experience & Skills"
+                      active={activeSection === "section-2"}
+                    />
+                    <StepLink
+                      number="03"
+                      label="Weekly Availability"
+                      active={activeSection === "section-3"}
+                    />
+                    <StepLink
+                      number="04"
+                      label="Eligibility Check"
+                      active={activeSection === "section-4"}
+                    />
+                    <StepLink
+                      number="05"
+                      label="Standards"
+                      active={activeSection === "section-5"}
+                    />
+                  </nav>
+                </div>
+              </div>
+            )}
 
-            <div className="lg:col-span-8">
-              <form className="space-y-24 pb-32" onSubmit={handleSubmit}>
-                {/* SECTION 1 */}
-                <section id="section-1" className="space-y-10 scroll-mt-32">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
-                      01
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                      Personal Details
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <InputGroup
-                      label="First Name *"
-                      value={formData.firstName}
-                      onChange={(v) => updateField("firstName", v)}
-                      placeholder="John"
-                    />
-                    <InputGroup
-                      label="Middle Name"
-                      value={formData.middleName}
-                      onChange={(v) => updateField("middleName", v)}
-                      placeholder="Optional"
-                    />
-                    <InputGroup
-                      label="Surname *"
-                      value={formData.surname}
-                      onChange={(v) => updateField("surname", v)}
-                      placeholder="Doe"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                        Your Gender (Optional)
-                      </label>
-                      <div className="relative">
-                        <select
-                          className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] bg-white font-bold text-slate-400 appearance-none cursor-pointer"
-                          value={formData.gender}
-                          onChange={(e) =>
-                            updateField("gender", e.target.value)
-                          }
-                        >
-                          <option value="">Select Gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <ChevronRight
-                          size={16}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none"
+            <div
+              className={
+                availabilityOnlyUpdate
+                  ? "w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6"
+                  : "lg:col-span-8"
+              }
+            >
+              {submitError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+                  {submitError}
+                </div>
+              )}
+              {availabilityOnlyUpdate && (
+                <div className="mb-8 p-5 bg-blue-50/80 border border-blue-200 rounded-xl text-slate-700 text-sm font-medium leading-relaxed">
+                  <p className="max-w-none">
+                    You can only update your{" "}
+                    <strong className="text-blue-800">
+                      weekly availability
+                    </strong>{" "}
+                    here. Other details (name, experience, etc.) cannot be
+                    changed.
+                  </p>
+                </div>
+              )}
+              <form
+                className={
+                  availabilityOnlyUpdate
+                    ? "space-y-8 pb-16"
+                    : "space-y-24 pb-32"
+                }
+                onSubmit={handleSubmit}
+              >
+                {availabilityOnlyUpdate ? null : (
+                  <>
+                    {/* SECTION 1 */}
+                    <section id="section-1" className="space-y-10 scroll-mt-32">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
+                          01
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                          Personal Details
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <InputGroup
+                          label="First Name *"
+                          value={formData.firstName}
+                          onChange={(v) => updateField("firstName", v)}
+                          placeholder="John"
+                        />
+                        <InputGroup
+                          label="Middle Name"
+                          value={formData.middleName}
+                          onChange={(v) => updateField("middleName", v)}
+                          placeholder="Optional"
+                        />
+                        <InputGroup
+                          label="Surname *"
+                          value={formData.surname}
+                          onChange={(v) => updateField("surname", v)}
+                          placeholder="Doe"
                         />
                       </div>
-                    </div>
-                    <InputGroup
-                      label="Mobile Number *"
-                      value={formData.phone}
-                      onChange={(v) => updateField("phone", v)}
-                      placeholder="07xxx xxxxxx"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputGroup
-                      label="Email Address *"
-                      value={formData.email}
-                      onChange={(v) => updateField("email", v)}
-                      type="email"
-                      placeholder="john@example.com"
-                    />
-                    <InputGroup
-                      label="Post Code *"
-                      value={formData.postcode}
-                      onChange={(v) => updateField("postcode", v)}
-                      placeholder="e.g. SW1A 1AA"
-                    />
-                  </div>
-                </section>
-
-                {/* SECTION 2 */}
-                <section id="section-2" className="space-y-10 scroll-mt-32">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
-                      02
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                      Experience & Skills
-                    </h2>
-                  </div>
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                        Experience Level *
-                      </label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[
-                          "Less than 6 months",
-                          "More than 6 months",
-                          "More than 2 years",
-                        ].map((lvl) => (
-                          <button
-                            key={lvl}
-                            type="button"
-                            onClick={() => updateField("experienceLevel", lvl)}
-                            className={`p-4 border-2 rounded-sm font-black uppercase text-[11px] tracking-widest transition-all ${formData.experienceLevel === lvl ? "border-[#448cff] bg-blue-50 text-[#448cff]" : "border-gray-400 text-slate-400 hover:border-gray-400"}`}
-                          >
-                            {lvl}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-6">
-                      <label className="text-xs font-black uppercase text-slate-400 tracking-widest">
-                        Cleaning Types *
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {[
-                          "Residential",
-                          "End of Tenancy",
-                          "Airbnb",
-                          "Commercial",
-                          "Other",
-                        ].map((type) => (
-                          <div
-                            key={type}
-                            onClick={() => toggleExpType(type)}
-                            className={`flex items-center gap-3 p-3 border rounded-sm cursor-pointer transition-all ${formData.experienceTypes.includes(type) ? "border-[#448cff] bg-blue-50" : "border-gray-300"}`}
-                          >
-                            <div
-                              className={`w-4 h-4 border flex items-center justify-center ${formData.experienceTypes.includes(type) ? "bg-[#448cff] border-[#448cff]" : "border-gray-400"}`}
-                            >
-                              {formData.experienceTypes.includes(type) && (
-                                <Check
-                                  size={14}
-                                  className="text-white"
-                                  strokeWidth={4}
-                                />
-                              )}
-                            </div>
-                            <span className="text-xs font-bold text-slate-600">
-                              {type}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* --- CORRECTED: "Other" Dropdown Box --- */}
-                      {formData.experienceTypes.includes("Other") && (
-                        <div className="mt-4 p-6 bg-slate-50 border border-gray-400 rounded-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                          <label className="text-[10px] font-black uppercase text-[#448cff] tracking-widest mb-4 block">
-                            Select specialized services you can perform:
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            Your Gender (Optional)
                           </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="relative">
+                            <select
+                              className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] bg-white font-bold text-slate-400 appearance-none cursor-pointer"
+                              value={formData.gender}
+                              onChange={(e) =>
+                                updateField("gender", e.target.value)
+                              }
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            <ChevronRight
+                              size={16}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none"
+                            />
+                          </div>
+                        </div>
+                        <InputGroup
+                          label="Mobile Number * (UK only)"
+                          value={formData.phone}
+                          onChange={updatePhone}
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="07xxx xxxxxx"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            Email Address * (your login email)
+                          </label>
+                          <input
+                            type="email"
+                            readOnly
+                            value={user?.email ?? ""}
+                            className="w-full p-4 border border-gray-400 rounded-sm outline-none bg-slate-50 font-bold text-slate-700 cursor-not-allowed"
+                          />
+                          <p className="text-xs text-slate-500 font-medium">
+                            Your application uses your account email only. UK postcode and UK phone number required.
+                          </p>
+                        </div>
+                        <InputGroup
+                          label="Post Code * (UK only)"
+                          value={formData.postcode}
+                          onChange={updatePostcode}
+                          placeholder="e.g. SW1A 1AA"
+                        />
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            Referral code (optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.referralCode}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, referralCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12) }))}
+                            placeholder="e.g. ABC12XYZ (from a friend or colleague)"
+                            className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] font-medium text-slate-800 placeholder-slate-400"
+                          />
+                          <p className="text-xs text-slate-500 font-medium">
+                            If someone referred you, enter their referral code here. You can find your own code on the Refer & Earn page after signing in.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* SECTION 2 */}
+                    <section id="section-2" className="space-y-10 scroll-mt-32">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
+                          02
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                          Experience & Skills
+                        </h2>
+                      </div>
+                      <div className="space-y-8">
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            Experience Level *
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {[
-                              "Carpet cleaning",
-                              "Window cleaning",
-                              "Oven cleaning",
-                              "Upholstery cleaning",
-                              "Office cleaning",
-                              "Gutter cleaning",
-                              "Pressure washing",
-                              "Pavement cleaning",
-                            ].map((subType) => (
-                              <CheckboxItem
-                                key={subType}
-                                label={subType}
-                                checked={formData.otherExperienceTypes.includes(
-                                  subType,
-                                )}
-                                onChange={() => toggleOtherType(subType)}
-                              />
+                              "Less than 6 months",
+                              "More than 6 months",
+                              "More than 2 years",
+                            ].map((lvl) => (
+                              <button
+                                key={lvl}
+                                type="button"
+                                onClick={() =>
+                                  updateField("experienceLevel", lvl)
+                                }
+                                className={`p-4 border-2 rounded-sm font-black uppercase text-[11px] tracking-widest transition-all ${formData.experienceLevel === lvl ? "border-[#448cff] bg-blue-50 text-[#448cff]" : "border-gray-400 text-slate-400 hover:border-gray-400"}`}
+                              >
+                                {lvl}
+                              </button>
                             ))}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </section>
+                        <div className="space-y-6">
+                          <label className="text-xs font-black uppercase text-slate-400 tracking-widest">
+                            Cleaning Types *
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            {[
+                              "Residential",
+                              "End of Tenancy",
+                              "Airbnb",
+                              "Commercial",
+                              "Other",
+                            ].map((type) => (
+                              <div
+                                key={type}
+                                onClick={() => toggleExpType(type)}
+                                className={`flex items-center gap-3 p-3 border rounded-sm cursor-pointer transition-all ${formData.experienceTypes.includes(type) ? "border-[#448cff] bg-blue-50" : "border-gray-300"}`}
+                              >
+                                <div
+                                  className={`w-4 h-4 border flex items-center justify-center ${formData.experienceTypes.includes(type) ? "bg-[#448cff] border-[#448cff]" : "border-gray-400"}`}
+                                >
+                                  {formData.experienceTypes.includes(type) && (
+                                    <Check
+                                      size={14}
+                                      className="text-white"
+                                      strokeWidth={4}
+                                    />
+                                  )}
+                                </div>
+                                <span className="text-xs font-bold text-slate-600">
+                                  {type}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
 
-                <section id="section-3" className="space-y-10 scroll-mt-32">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
-                      03
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                        Availability
+                          {/* --- CORRECTED: "Other" Dropdown Box --- */}
+                          {formData.experienceTypes.includes("Other") && (
+                            <div className="mt-4 p-6 bg-slate-50 border border-gray-400 rounded-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                              <label className="text-[10px] font-black uppercase text-[#448cff] tracking-widest mb-4 block">
+                                Select specialized services you can perform:
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {[
+                                  "Carpet cleaning",
+                                  "Window cleaning",
+                                  "Oven cleaning",
+                                  "Upholstery cleaning",
+                                  "Office cleaning",
+                                  "Gutter cleaning",
+                                  "Pressure washing",
+                                  "Pavement cleaning",
+                                ].map((subType) => (
+                                  <CheckboxItem
+                                    key={subType}
+                                    label={subType}
+                                    checked={formData.otherExperienceTypes.includes(
+                                      subType,
+                                    )}
+                                    onChange={() => toggleOtherType(subType)}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                )}
+
+                <section
+                  id="section-3"
+                  className={`scroll-mt-32 ${availabilityOnlyUpdate ? "bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden p-6 sm:p-8 lg:p-10" : "space-y-10"}`}
+                >
+                  <div
+                    className={`flex items-center gap-4 ${availabilityOnlyUpdate ? "mb-6 lg:mb-8" : ""}`}
+                  >
+                    {!availabilityOnlyUpdate && (
+                      <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-lg flex items-center justify-center font-black text-xl border border-blue-100 shrink-0">
+                        03
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h2
+                        className={`font-black text-slate-900 tracking-tight ${availabilityOnlyUpdate ? "text-xl sm:text-2xl mb-1" : "text-2xl uppercase"}`}
+                      >
+                        {availabilityOnlyUpdate
+                          ? "Weekly availability"
+                          : "Availability"}
                       </h2>
-                      <p className="text-slate-600">
-                        Please update your availability in case of temporary
-                        unavoidable reasons
+                      <p className="text-slate-600 text-sm md:text-base">
+                        {availabilityOnlyUpdate
+                          ? "Tick the days you can work and set your time slots. Submit when done."
+                          : "Please update your availability in case of temporary unavoidable reasons"}
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div
+                    className={
+                      availabilityOnlyUpdate ? "space-y-4" : "space-y-4"
+                    }
+                  >
                     {Object.keys(formData.availability).map((day) => (
                       <div
                         key={day}
-                        className={`border rounded-sm transition-all duration-300 ${formData.availability[day].enabled ? "border-gray-400 bg-white shadow-md" : "border-gray-200 bg-slate-50 opacity-60"}`}
+                        className={`border rounded-xl transition-all duration-200 ${formData.availability[day].enabled ? "border-[#448cff]/30 bg-white shadow-sm" : "border-gray-200 bg-slate-50/80"}`}
                       >
                         <div
-                          className={`flex justify-between items-center p-5 ${formData.availability[day].enabled ? "bg-slate-50 border-b border-gray-400" : ""}`}
+                          className={`flex justify-between items-center p-4 sm:p-5 ${formData.availability[day].enabled ? "bg-slate-50/80 border-b border-gray-100 rounded-t-xl" : ""}`}
                         >
-                          <span className="font-black uppercase text-sm tracking-widest">
+                          <span className="font-bold text-slate-800 text-sm md:text-base shrink-0">
                             {day}
                           </span>
-                          <label className="flex items-center gap-3 cursor-pointer">
+                          <label className="flex items-center gap-3 cursor-pointer select-none shrink-0">
                             <input
                               type="checkbox"
-                              className="w-5 h-5 accent-[#448cff] cursor-pointer"
+                              className="w-5 h-5 accent-[#448cff] cursor-pointer rounded border-gray-300"
                               checked={formData.availability[day].enabled}
                               onChange={() =>
                                 updateAvailability(
@@ -505,39 +977,47 @@ const Apply = () => {
                                 )
                               }
                             />
-                            <span className="text-[10px] font-black uppercase text-slate-400">
+                            <span className="text-sm font-semibold text-slate-600">
                               Available
                             </span>
                           </label>
                         </div>
 
                         {formData.availability[day].enabled && (
-                          <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
+                          <div
+                            className={
+                              availabilityOnlyUpdate
+                                ? "p-4 sm:p-5 lg:p-6 space-y-5"
+                                : "p-4 sm:p-5 lg:p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-8"
+                            }
+                          >
                             {[
                               { id: 1, label: "Morning" },
                               { id: 2, label: "Afternoon" },
                               { id: 3, label: "Evening" },
                             ].map((shift) => {
-                              // --- NEW LOGIC: Filter times based on shift ---
                               const filteredTimes = timeOptions.filter((t) => {
                                 const hour = parseInt(t.split(":")[0]);
                                 if (shift.id === 1)
-                                  return hour >= 7 && hour <= 12; // 07:00 to 12:00
+                                  return hour >= 7 && hour <= 12;
                                 if (shift.id === 2)
-                                  return hour >= 12 && hour <= 17; // 12:00 to 17:00 (5pm)
+                                  return hour >= 12 && hour <= 17;
                                 if (shift.id === 3)
-                                  return hour >= 17 && hour <= 20; // 17:00 to 20:00 (8pm)
+                                  return hour >= 17 && hour <= 20;
                                 return true;
                               });
 
                               return (
-                                <div key={shift.id} className="space-y-2">
-                                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                <div
+                                  key={shift.id}
+                                  className="space-y-2 min-w-0"
+                                >
+                                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                                     {shift.label}
                                   </p>
-                                  <div className="flex items-center border border-gray-400 rounded-sm divide-x divide-gray-400 overflow-hidden focus-within:border-[#448cff]">
+                                  <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#448cff]/20 focus-within:border-[#448cff]">
                                     <select
-                                      className="flex-1 p-2.5 text-xs font-bold outline-none appearance-none text-center bg-white cursor-pointer hover:bg-slate-50"
+                                      className="flex-1 min-w-0 p-3 text-sm font-semibold outline-none appearance-none text-center bg-white cursor-pointer text-slate-800"
                                       value={
                                         formData.availability[day][
                                           `s${shift.id}_start`
@@ -551,7 +1031,7 @@ const Apply = () => {
                                         )
                                       }
                                     >
-                                      <option value="">00</option>
+                                      <option value="">Start</option>
                                       {filteredTimes.map((t) => (
                                         <option key={t} value={t}>
                                           {t}
@@ -559,7 +1039,7 @@ const Apply = () => {
                                       ))}
                                     </select>
                                     <select
-                                      className="flex-1 p-2.5 text-xs font-bold outline-none appearance-none text-center bg-white cursor-pointer hover:bg-slate-50"
+                                      className="flex-1 min-w-0 p-3 text-sm font-semibold outline-none appearance-none text-center bg-white cursor-pointer text-slate-800"
                                       value={
                                         formData.availability[day][
                                           `s${shift.id}_end`
@@ -573,12 +1053,18 @@ const Apply = () => {
                                         )
                                       }
                                     >
-                                      <option value="">00</option>
-                                      {filteredTimes.map((t) => (
-                                        <option key={t} value={t}>
-                                          {t}
-                                        </option>
-                                      ))}
+                                      <option value="">End</option>
+                                      {filteredTimes
+                                        .filter(
+                                          (t) =>
+                                            !formData.availability[day][`s${shift.id}_start`] ||
+                                            t > formData.availability[day][`s${shift.id}_start`]
+                                        )
+                                        .map((t) => (
+                                          <option key={t} value={t}>
+                                            {t}
+                                          </option>
+                                        ))}
                                     </select>
                                   </div>
                                 </div>
@@ -591,80 +1077,90 @@ const Apply = () => {
                   </div>
                 </section>
 
-                {/* SECTION 4 */}
-                <section id="section-4" className="space-y-10 scroll-mt-32">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
-                      04
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                      Eligibility
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <CheckboxItem
-                      label="I have the right to work in the UK"
-                      checked={formData.eligibility.workRights}
-                      onChange={() => updateEligibility("workRights")}
-                    />
-                    <CheckboxItem
-                      label="I have a UK bank account"
-                      checked={formData.eligibility.bankAccount}
-                      onChange={() => updateEligibility("bankAccount")}
-                    />
-                    <CheckboxItem
-                      label="I understand I will be self-employed"
-                      checked={formData.eligibility.selfEmployed}
-                      onChange={() => updateEligibility("selfEmployed")}
-                    />
-                    <CheckboxItem
-                      label="I do not have a criminal record/police convictions"
-                      checked={formData.eligibility.cleanRecord}
-                      onChange={() => updateEligibility("cleanRecord")}
-                    />
-                  </div>
-                </section>
+                {!availabilityOnlyUpdate && (
+                  <>
+                    {/* SECTION 4 */}
+                    <section id="section-4" className="space-y-10 scroll-mt-32">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
+                          04
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                          Eligibility
+                        </h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <CheckboxItem
+                          label="I have the right to work in the UK"
+                          checked={formData.eligibility.workRights}
+                          onChange={() => updateEligibility("workRights")}
+                        />
+                        <CheckboxItem
+                          label="I have a UK bank account"
+                          checked={formData.eligibility.bankAccount}
+                          onChange={() => updateEligibility("bankAccount")}
+                        />
+                        <CheckboxItem
+                          label="I understand I will be self-employed"
+                          checked={formData.eligibility.selfEmployed}
+                          onChange={() => updateEligibility("selfEmployed")}
+                        />
+                        <CheckboxItem
+                          label="I do not have a criminal record/police convictions"
+                          checked={formData.eligibility.cleanRecord}
+                          onChange={() => updateEligibility("cleanRecord")}
+                        />
+                      </div>
+                    </section>
 
-                {/* SECTION 5 */}
-                <section id="section-5" className="space-y-10 scroll-mt-32">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
-                      05
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
-                      Excellence Standards
-                    </h2>
-                  </div>
-                  <div className="flex items-start gap-6 bg-slate-900 p-8 md:p-12 rounded-sm relative overflow-hidden group border border-gray-400">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#448cff]/20 rounded-full blur-3xl"></div>
-                    <div className="relative z-10 shrink-0 mt-1">
-                      <Sparkles size={28} className="text-[#448cff]" />
-                    </div>
-                    <div className="relative z-10 space-y-6">
-                      <p className="text-[16px] text-slate-300 leading-relaxed font-medium italic">
-                        "We won’t sugar-coat it: this role involves physical
-                        work and attention to detail. If you take pride in doing
-                        a job well, you’ll fit right in!"
-                      </p>
-                      <p className="text-[16px] text-white leading-relaxed font-black uppercase tracking-wide">
-                        <span className="text-[#448cff]">Important:</span> You
-                        will need to happily reclean areas of property free of
-                        charge if the customer is not 100% satisfied.
-                      </p>
-                    </div>
-                  </div>
-                </section>
+                    {/* SECTION 5 */}
+                    <section id="section-5" className="space-y-10 scroll-mt-32">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 text-[#448cff] rounded-sm flex items-center justify-center font-black text-xl border border-blue-100">
+                          05
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                          Excellence Standards
+                        </h2>
+                      </div>
+                      <div className="flex items-start gap-6 bg-slate-900 p-8 md:p-12 rounded-sm relative overflow-hidden group border border-gray-400">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#448cff]/20 rounded-full blur-3xl"></div>
+                        <div className="relative z-10 shrink-0 mt-1">
+                          <Sparkles size={28} className="text-[#448cff]" />
+                        </div>
+                        <div className="relative z-10 space-y-6">
+                          <p className="text-[16px] text-slate-300 leading-relaxed font-medium italic">
+                            "We won’t sugar-coat it: this role involves physical
+                            work and attention to detail. If you take pride in
+                            doing a job well, you’ll fit right in!"
+                          </p>
+                          <p className="text-[16px] text-white leading-relaxed font-black uppercase tracking-wide">
+                            <span className="text-[#448cff]">Important:</span>{" "}
+                            You will need to happily reclean areas of property
+                            free of charge if the customer is not 100%
+                            satisfied.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full bg-[#448cff] text-white py-6 rounded-sm font-black uppercase tracking-[0.3em] text-lg hover:bg-blue-700 shadow-2xl shadow-blue-500/20 active:scale-95 transition-all"
+                  disabled={submitLoading}
+                  className="w-full bg-[#448cff] text-white py-6 rounded-sm font-black uppercase tracking-[0.3em] text-lg hover:bg-blue-700 shadow-2xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                 >
-                  Submit Application
+                  {submitLoading
+                    ? "Submitting..."
+                    : availabilityOnlyUpdate
+                      ? "Submit availability update"
+                      : "Submit Application"}
                 </button>
               </form>
             </div>
           </div>
-        )}
+        ) : null}
       </main>
       <Footer />
     </div>
@@ -687,13 +1183,14 @@ const StepLink = ({ number, label, active }) => (
   </div>
 );
 
-const InputGroup = ({ label, placeholder, value, onChange, type = "text" }) => (
+const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputMode }) => (
   <div className="space-y-2 w-full">
     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
       {label}
     </label>
     <input
       type={type}
+      inputMode={inputMode}
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
