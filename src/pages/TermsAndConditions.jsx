@@ -116,7 +116,7 @@ const TermsAndConditions = () => {
               4. Pricing and Payment
             </h2>
             <p className="mb-6">
-              Pricing is based on service type, size, and duration in the site
+              Pricing is based on service type, size, and duration in the local
               currency ({currencySymbol}).
             </p>
             <ul className="list-inside list-disc space-y-3 text-center">
@@ -125,7 +125,7 @@ const TermsAndConditions = () => {
                 completion.
               </li>
               <li>
-                <strong>Late Payment:</strong> If not received within 7 days, a
+                <strong>Late Payment:</strong> If not received within 7 days,{" "}
                 {currencySymbol}15 fee applies.
               </li>
               <li>
