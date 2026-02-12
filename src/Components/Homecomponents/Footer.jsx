@@ -5,7 +5,8 @@ import { useSiteSettings } from "../../contexts/SiteSettingsContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { location, locationPostcodes, logoUrl, countryDisplayName } = useSiteSettings();
+  const { location, locationPostcodes, logoUrl, countryDisplayName } =
+    useSiteSettings();
 
   const socialLinks = [
     {
@@ -162,7 +163,9 @@ const Footer = () => {
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">
                   Location
                 </p>
-                <p className="text-slate-800 font-bold">{countryDisplayName}</p>
+                <p className="text-slate-800 font-bold">
+                  22 Watford Road, Wembley, England, HA0 3EP
+                </p>
               </div>
             </div>
           </div>
