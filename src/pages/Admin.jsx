@@ -32,6 +32,44 @@ const BUCKET_LOGO = "logos";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// UK target locations with fixed postcodes (from requirements – only these locations and postcodes allowed)
+const UK_LOCATIONS_WITH_POSTCODES = [
+  { name: "Wimbledon", postcodes: ["SW19", "SW20"] },
+  { name: "Richmond upon Thames", postcodes: ["TW9", "TW10", "SW14"] },
+  { name: "Hampstead", postcodes: ["NW3", "NW11"] },
+  { name: "Beaconsfield", postcodes: ["HP9"] },
+  { name: "Cobham", postcodes: ["KT11"] },
+  { name: "Sevenoaks", postcodes: ["TN13", "TN14"] },
+  { name: "Hale (Cheshire)", postcodes: ["WA15"] },
+  { name: "Wilmslow", postcodes: ["SK9"] },
+  { name: "Stockbridge (Edinburgh)", postcodes: ["EH3", "EH4"] },
+];
+
+function getUKAllowedPostcodes(locationName) {
+  const loc = UK_LOCATIONS_WITH_POSTCODES.find((l) => l.name === locationName);
+  return loc ? loc.postcodes : [];
+}
+
+// Cities by country for Locations filter (admin can only select from these when country is set)
+const CITIES_BY_COUNTRY = {
+  uk: UK_LOCATIONS_WITH_POSTCODES.map((l) => l.name),
+  us: [
+    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego",
+    "Dallas", "San Jose", "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte", "San Francisco",
+    "Indianapolis", "Seattle", "Denver", "Boston", "Nashville", "Detroit", "Portland", "Las Vegas", "Memphis",
+    "Louisville", "Baltimore", "Milwaukee", "Albuquerque", "Tucson", "Fresno", "Sacramento", "Kansas City",
+    "Mesa", "Atlanta", "Omaha", "Colorado Springs", "Raleigh", "Miami", "Long Beach", "Virginia Beach",
+    "Oakland", "Minneapolis", "Tulsa", "Tampa", "Arlington", "New Orleans", "Wichita", "Cleveland", "Bakersfield",
+  ],
+  canada: [
+    "Toronto", "Vancouver", "Montreal", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Quebec City", "Hamilton",
+    "Kitchener", "London", "Victoria", "Halifax", "Oshawa", "Windsor", "Saskatoon", "Regina", "Sherbrooke",
+    "Barrie", "Kelowna", "Abbotsford", "Kingston", "Saguenay", "Trois-Rivières", "Guelph", "Moncton",
+    "Brantford", "Saint John", "Thunder Bay", "Peterborough", "Sarnia", "Lethbridge", "Nanaimo", "Kamloops",
+    "Chatham-Kent", "Fredericton", "Red Deer", "Prince George", "Belleville", "Saint John's", "Sault Ste. Marie",
+  ],
+};
+
 function formatAvailability(availability) {
   if (!availability || typeof availability !== "object") return null;
   return DAYS.filter((day) => availability[day]?.enabled).map((day) => {
@@ -376,6 +414,17 @@ const Admin = () => {
     })).sort((a, b) => new Date(b.apps[0].created_at) - new Date(a.apps[0].created_at));
   }, [filteredApplications]);
 
+  const locationsForCountry = useMemo(() => {
+    const allowed = CITIES_BY_COUNTRY[country] || [];
+    if (allowed.length === 0) return locations;
+    return locations.filter((loc) => allowed.includes(loc.name));
+  }, [locations, country]);
+  const wrongCountryLocations = useMemo(() => {
+    const allowed = CITIES_BY_COUNTRY[country] || [];
+    if (allowed.length === 0) return [];
+    return locations.filter((loc) => !allowed.includes(loc.name));
+  }, [locations, country]);
+
   if (authLoading || (!user || !isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -423,6 +472,26 @@ const Admin = () => {
       setLocationFormError("Location name is required.");
       return;
     }
+    const allowedCities = CITIES_BY_COUNTRY[country] || [];
+    if (allowedCities.length > 0 && !allowedCities.includes(name)) {
+      setLocationFormError(`Please select a city from the ${country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} list. You cannot add a city from another country.`);
+      return;
+    }
+    if (country === "uk" && name) {
+      const allowedPostcodes = getUKAllowedPostcodes(name);
+      if (allowedPostcodes.length > 0) {
+        const entered = postcodes.split(",").map((p) => p.trim().toUpperCase()).filter(Boolean);
+        const invalid = entered.filter((p) => !allowedPostcodes.includes(p));
+        if (invalid.length > 0) {
+          setLocationFormError(`Only these postcodes are allowed for ${name}: ${allowedPostcodes.join(", ")}. Remove: ${invalid.join(", ")}.`);
+          return;
+        }
+        if (entered.length === 0) {
+          setLocationFormError(`Select at least one postcode for ${name}.`);
+          return;
+        }
+      }
+    }
     setSaving(true);
     try {
       if (editingLocationId) {
@@ -459,7 +528,20 @@ const Admin = () => {
 
   const startEditLocation = (loc) => {
     setEditingLocationId(loc.id);
-    setLocationForm({ name: loc.name, postcodes: loc.postcodes || "" });
+    const allowedCities = CITIES_BY_COUNTRY[country] || [];
+    const nameAllowed = allowedCities.length === 0 || allowedCities.includes(loc.name);
+    let postcodes = loc.postcodes || "";
+    if (country === "uk" && loc.name) {
+      const allowed = getUKAllowedPostcodes(loc.name);
+      if (allowed.length > 0) {
+        const saved = (postcodes || "").split(",").map((p) => p.trim().toUpperCase()).filter(Boolean);
+        postcodes = saved.filter((p) => allowed.includes(p)).join(", ");
+      }
+    }
+    setLocationForm({
+      name: nameAllowed ? loc.name : "",
+      postcodes: nameAllowed ? postcodes : "",
+    });
     setLocationFormError("");
   };
 
@@ -467,6 +549,26 @@ const Admin = () => {
     setEditingLocationId(null);
     setLocationForm({ name: "", postcodes: "" });
     setLocationFormError("");
+  };
+
+  const handleRemoveWrongCountryLocations = async () => {
+    if (wrongCountryLocations.length === 0) return;
+    const countryLabel = country === "uk" ? "UK" : country === "us" ? "US" : "Canadian";
+    if (!window.confirm(`Remove ${wrongCountryLocations.length} location(s) that are not ${countryLabel} cities? This cannot be undone.`)) return;
+    setSaving(true);
+    setLocationFormError("");
+    const allowed = CITIES_BY_COUNTRY[country] || [];
+    try {
+      for (const loc of wrongCountryLocations) {
+        const { error } = await supabase.from("locations").delete().eq("id", loc.id);
+        if (error) throw error;
+      }
+      setLocations((prev) => prev.filter((l) => allowed.includes(l.name)));
+    } catch (e) {
+      setLocationFormError(e.message || "Failed to remove locations.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const logoSrc = logoUrl || "/websitelogo.png";
@@ -1101,7 +1203,14 @@ const Admin = () => {
                     <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Country</label>
                     <select
                       value={country}
-                      onChange={(e) => updateSetting("country", e.target.value)}
+                      onChange={(e) => {
+                        const newCountry = e.target.value;
+                        updateSetting("country", newCountry);
+                        const cities = CITIES_BY_COUNTRY[newCountry] || [];
+                        if (cities.length && locationForm.name && !cities.includes(locationForm.name)) {
+                          setLocationForm((p) => ({ ...p, name: "" }));
+                        }
+                      }}
                       className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 min-w-[200px]"
                     >
                       {countryOptions.map((opt) => (
@@ -1114,20 +1223,72 @@ const Admin = () => {
                     {locationPostcodes ? ` (${locationPostcodes})` : ""}
                   </p>
                   <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-4">
-                    <input
-                      type="text"
-                      placeholder="Location name"
-                      value={locationForm.name}
-                      onChange={(e) => setLocationForm((p) => ({ ...p, name: e.target.value }))}
-                      className="flex-1 min-w-0 w-full sm:min-w-[180px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder={postcodeLabel === "Zipcode" ? "Zipcodes (e.g. 10001, 90210)" : `Postcodes (e.g. SW19, SW20)`}
-                      value={locationForm.postcodes}
-                      onChange={(e) => setLocationForm((p) => ({ ...p, postcodes: e.target.value }))}
-                      className="flex-1 min-w-0 w-full sm:min-w-[200px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
-                    />
+                    {(() => {
+                      const countryCities = CITIES_BY_COUNTRY[country] || [];
+                      const useCityDropdown = countryCities.length > 0;
+                      const valueInList = useCityDropdown && countryCities.includes(locationForm.name);
+                      return useCityDropdown ? (
+                        <select
+                          value={valueInList ? locationForm.name : ""}
+                          onChange={(e) => {
+                            const newName = e.target.value;
+                            const hadPostcodes = locationForm.postcodes.trim();
+                            const allowed = country === "uk" ? getUKAllowedPostcodes(newName) : [];
+                            const keepPostcodes = newName && hadPostcodes && country === "uk" && allowed.length > 0
+                              && hadPostcodes.split(",").map((p) => p.trim().toUpperCase()).every((p) => allowed.includes(p));
+                            setLocationForm((p) => ({ ...p, name: newName, postcodes: keepPostcodes ? p.postcodes : "" }));
+                          }}
+                          className="flex-1 min-w-0 w-full sm:min-w-[180px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 bg-white"
+                        >
+                          <option value="">Select {country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} city only</option>
+                          {countryCities.map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="Location name"
+                          value={locationForm.name}
+                          onChange={(e) => setLocationForm((p) => ({ ...p, name: e.target.value }))}
+                          className="flex-1 min-w-0 w-full sm:min-w-[180px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
+                        />
+                      );
+                    })()}
+                    {country === "uk" && locationForm.name && getUKAllowedPostcodes(locationForm.name).length > 0 ? (
+                      <div className="flex-1 min-w-0 w-full sm:min-w-[200px]">
+                        <p className="text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Postcodes (select only these)</p>
+                        <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg bg-slate-50/50">
+                          {getUKAllowedPostcodes(locationForm.name).map((pc) => {
+                            const current = locationForm.postcodes.split(",").map((p) => p.trim().toUpperCase()).filter(Boolean);
+                            const checked = current.includes(pc);
+                            return (
+                              <label key={pc} className="inline-flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    const next = checked ? current.filter((c) => c !== pc) : [...current, pc].sort();
+                                    setLocationForm((p) => ({ ...p, postcodes: next.join(", ") }));
+                                  }}
+                                  className="rounded border-gray-400 text-[#448cff] focus:ring-[#448cff]"
+                                />
+                                <span className="text-sm font-medium text-slate-800">{pc}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder={country === "us" ? "ZIP codes (e.g. 10001, 90210)" : country === "canada" ? "Postal codes (e.g. M5V, K1A)" : country === "uk" ? "Select a location first" : "Postcodes"}
+                        value={locationForm.postcodes}
+                        onChange={(e) => setLocationForm((p) => ({ ...p, postcodes: e.target.value }))}
+                        className="flex-1 min-w-0 w-full sm:min-w-[200px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
+                        readOnly={country === "uk" && CITIES_BY_COUNTRY.uk.length > 0}
+                      />
+                    )}
                     <div className="flex gap-2 flex-shrink-0">
                       <button
                         type="button"
@@ -1146,6 +1307,22 @@ const Admin = () => {
                     </div>
                   </div>
                   {locationFormError && <p className="text-sm text-red-600 mb-2">{locationFormError}</p>}
+                  {wrongCountryLocations.length > 0 && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-800 font-medium mb-2">
+                        {wrongCountryLocations.length} saved location(s) are not {country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} cities. They are hidden below. Remove them from the database to clean up.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleRemoveWrongCountryLocations}
+                        disabled={saving}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 disabled:opacity-70"
+                      >
+                        <Trash2 size={16} />
+                        Remove {wrongCountryLocations.length} non-{country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} location(s)
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                   {locationsLoading ? (
@@ -1162,7 +1339,7 @@ const Admin = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {locations.map((loc) => {
+                        {locationsForCountry.map((loc) => {
                           const isActive = location === loc.name && (locationPostcodes || "") === (loc.postcodes || "");
                           return (
                             <tr key={loc.id} className={`border-b border-gray-100 hover:bg-slate-50/50 ${editingLocationId === loc.id ? "bg-blue-50/50" : ""}`}>
@@ -1219,7 +1396,7 @@ const Admin = () => {
                     </table>
                     </div>
                   )}
-                  {!locationsLoading && locations.length === 0 && <p className="p-8 text-center text-slate-500">No locations yet. Add one above.</p>}
+                  {!locationsLoading && locationsForCountry.length === 0 && <p className="p-8 text-center text-slate-500">{locations.length === 0 ? "No locations yet. Add one above." : `No ${country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} locations. Add one above or remove locations from other countries.`}</p>}
                 </div>
               </div>
             )}

@@ -1,11 +1,20 @@
 import React, { useEffect } from "react";
 import Navbar from "../Components/Homecomponents/Navbar";
 import Footer from "../Components/Homecomponents/Footer";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
+
+const sectionHeadingClass = "text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-tight border-b-2 border-gray-100 pb-2";
 
 const PrivacyPolicy = () => {
+  const { country } = useSiteSettings();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const isUK = country === "uk";
+  const isUS = country === "us";
+  const isCanada = country === "canada";
+  const showCleanerPolicy = isUK || isUS || isCanada;
 
   return (
     <div className="font-jakarta bg-white text-slate-700 ">
@@ -19,8 +28,23 @@ const PrivacyPolicy = () => {
             Services LTD
           </h1>
           <p className="text-[#448cff] font-black uppercase tracking-widest text-sm mb-4">
-            Professional Cleaning Services
+            {showCleanerPolicy ? "Cleaner Privacy Policy" : "Professional Cleaning Services"}
           </p>
+          {isUK && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              United Kingdom
+            </p>
+          )}
+          {isUS && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              United States
+            </p>
+          )}
+          {isCanada && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              Canada
+            </p>
+          )}
           <div className="flex flex-col md:flex-row justify-center gap-4 text-slate-400 text-xs font-bold uppercase tracking-widest">
             <span>Effective Date: 31 January 2025</span>
             <span className="hidden md:block">|</span>
@@ -32,6 +56,214 @@ const PrivacyPolicy = () => {
       {/* --- MAIN CONTENT --- */}
       <main className="max-w-4xl mx-auto px-6 py-20 font-jakarta">
         <div className="space-y-16">
+          {isUK ? (
+            /* --- UK: CLEANER PRIVACY POLICY --- */
+            <>
+              <section>
+                <h2 className={sectionHeadingClass}>1. Legal Framework</h2>
+                <p className="leading-relaxed">
+                  This Privacy Policy complies with UK GDPR and the Data Protection Act 2018.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>2. Data Collected</h2>
+                <p className="leading-relaxed mb-4">
+                  The Company may collect identification details, contact information, tax details, banking
+                  information, insurance documents, background checks, GPS attendance data, performance
+                  records, and system usage logs.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>3. Purpose of Processing</h2>
+                <p className="leading-relaxed">
+                  Data is processed for contract administration, compliance, payment processing, regulatory
+                  requirements, and operational management.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>4. Data Retention</h2>
+                <p className="leading-relaxed">
+                  Data is retained for statutory limitation periods (typically 6–7 years depending on jurisdiction).
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>5. Security Measures</h2>
+                <p className="leading-relaxed">
+                  The Company implements encryption, role-based access controls, secure servers, and breach
+                  response protocols.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>6. Contractor Rights</h2>
+                <p className="leading-relaxed">
+                  Contractors have rights under UK GDPR including access, rectification, erasure, restriction,
+                  data portability, and the right to lodge a complaint with the ICO.
+                </p>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Cleaner Privacy Policy.
+                </p>
+              </div>
+            </>
+          ) : isUS ? (
+            /* --- US: CLEANER PRIVACY POLICY --- */
+            <>
+              <section>
+                <h2 className={sectionHeadingClass}>1. Legal Framework</h2>
+                <p className="leading-relaxed">
+                  This Privacy Policy complies with applicable federal and state privacy laws, including CCPA where applicable.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>2. Data Collected</h2>
+                <p className="leading-relaxed mb-4">
+                  The Company may collect identification details, contact information, tax details, banking
+                  information, insurance documents, background checks, GPS attendance data, performance
+                  records, and system usage logs.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>3. Purpose of Processing</h2>
+                <p className="leading-relaxed">
+                  Data is processed for contract administration, compliance, payment processing, regulatory
+                  requirements, and operational management.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>4. Data Retention</h2>
+                <p className="leading-relaxed">
+                  Data is retained for statutory limitation periods (typically 6–7 years depending on jurisdiction).
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>5. Security Measures</h2>
+                <p className="leading-relaxed">
+                  The Company implements encryption, role-based access controls, secure servers, and breach
+                  response protocols.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>6. Contractor Rights</h2>
+                <p className="leading-relaxed">
+                  Contractors may request access, correction, or lawful erasure of personal data subject to legal limitations.
+                </p>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Cleaner Privacy Policy.
+                </p>
+              </div>
+            </>
+          ) : isCanada ? (
+            /* --- CANADA: CLEANER PRIVACY POLICY --- */
+            <>
+              <section>
+                <h2 className={sectionHeadingClass}>Legal Framework</h2>
+                <p className="leading-relaxed mb-4">
+                  This Privacy Policy complies with:
+                </p>
+                <ul className="list-disc pl-8 space-y-2 leading-relaxed">
+                  <li>Personal Information Protection and Electronic Documents Act (PIPEDA)</li>
+                  <li>Applicable provincial privacy legislation</li>
+                </ul>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>1. Information Collected</h2>
+                <p className="leading-relaxed mb-2">The Company may collect:</p>
+                <ul className="list-disc pl-8 space-y-2 leading-relaxed">
+                  <li>Identification details</li>
+                  <li>Contact information</li>
+                  <li>Social Insurance Number (where legally required)</li>
+                  <li>Banking information</li>
+                  <li>Insurance documentation</li>
+                  <li>Background check information</li>
+                  <li>GPS attendance data</li>
+                  <li>Performance and compliance records</li>
+                </ul>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>2. Purpose of Processing</h2>
+                <p className="leading-relaxed mb-2">Personal information is processed for:</p>
+                <ul className="list-disc pl-8 space-y-2 leading-relaxed">
+                  <li>Contract administration</li>
+                  <li>Payment processing</li>
+                  <li>Legal and regulatory compliance</li>
+                  <li>Operational management</li>
+                  <li>Quality control</li>
+                </ul>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>3. Data Retention</h2>
+                <p className="leading-relaxed">
+                  Personal data is retained for statutory limitation periods (typically 6–7 years), or longer where required by law.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>4. Security Measures</h2>
+                <p className="leading-relaxed mb-2">The Company implements:</p>
+                <ul className="list-disc pl-8 space-y-2 leading-relaxed">
+                  <li>Encryption</li>
+                  <li>Secure server storage</li>
+                  <li>Role-based access controls</li>
+                  <li>Password-protected systems</li>
+                  <li>Breach response protocols</li>
+                </ul>
+              </section>
+              <section>
+                <h2 className={sectionHeadingClass}>5. Contractor Rights</h2>
+                <p className="leading-relaxed mb-2">Subject to legal limitations, Contractors may:</p>
+                <ul className="list-disc pl-8 space-y-2 leading-relaxed">
+                  <li>Request access to personal information</li>
+                  <li>Request correction of inaccurate data</li>
+                  <li>Request lawful erasure</li>
+                  <li>File a complaint with the Privacy Commissioner of Canada</li>
+                </ul>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Cleaner Privacy Policy.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
           {/* 1. Introduction */}
           <section>
             <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-tight border-b-2 border-gray-100 pb-2">
@@ -550,6 +782,8 @@ const PrivacyPolicy = () => {
               acknowledge that you have read and understood this Privacy Policy.
             </p>
           </div>
+            </>
+          )}
         </div>
       </main>
 

@@ -4,10 +4,16 @@ import Footer from "../Components/Homecomponents/Footer";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 const TermsAndConditions = () => {
-  const { currencySymbol } = useSiteSettings();
+  const { currencySymbol, country } = useSiteSettings();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const sectionClass = "text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-tight border-b-2 border-gray-100 pb-2 inline-block";
+  const isUK = country === "uk";
+  const isUS = country === "us";
+  const isCanada = country === "canada";
+  const showContractorAgreement = isUK || isUS || isCanada;
 
   return (
     <div className="font-jakarta bg-white text-slate-700 ">
@@ -21,8 +27,23 @@ const TermsAndConditions = () => {
             Services LTD
           </h1>
           <p className="text-[#448cff] font-black uppercase tracking-widest text-sm mb-4">
-            Terms and Conditions
+            {showContractorAgreement ? "Independent Contractor Agreement" : "Terms and Conditions"}
           </p>
+          {isUK && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              United Kingdom – Balanced Enforcement
+            </p>
+          )}
+          {isUS && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              United States – Balanced Enforcement
+            </p>
+          )}
+          {isCanada && (
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">
+              Canada
+            </p>
+          )}
           <div className="flex flex-col md:flex-row justify-center gap-4 text-slate-400 text-xs font-bold uppercase tracking-widest">
             <span>Effective Date: 31 January 2025</span>
             <span className="hidden md:block">|</span>
@@ -34,6 +55,322 @@ const TermsAndConditions = () => {
       {/* --- CONTENT SECTION --- */}
       <main className="max-w-4xl mx-auto px-6 py-20 text-center">
         <div className="space-y-16">
+          {isUK ? (
+            /* --- UK: INDEPENDENT CONTRACTOR AGREEMENT --- */
+            <>
+              <section>
+                <h2 className={sectionClass}>1. Independent Contractor Status</h2>
+                <p className="leading-relaxed text-center">
+                  The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
+                  employment, worker, partnership, or agency status. Contractor controls the manner and method of
+                  work and is responsible for all taxes, statutory contributions, and insurance obligations.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>2. Scope of Services</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor shall provide cleaning services as allocated through the Company's booking system.
+                  Contractor retains discretion over how services are performed, subject to agreed service standards.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>3. Reasonable Non-Solicitation</h2>
+                <p className="leading-relaxed text-center">
+                  During engagement and for 6 months following termination, Contractor shall not directly solicit or
+                  accept work from clients personally serviced through the Company. This restriction is limited to
+                  clients directly introduced to Contractor.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
+                <p className="leading-relaxed text-center">
+                  In the event of proven breach of non-solicitation or confidentiality, Contractor agrees to pay {currencySymbol}5,000
+                  as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>5. Revenue Recovery Formula</h2>
+                <p className="leading-relaxed text-center">
+                  If Contractor directly engages a Company client in breach of this Agreement, Contractor shall
+                  compensate Company for 6 months of average revenue generated from that client.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>6. Confidentiality</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor shall keep confidential all client data, pricing structures, CRM systems, automation
+                  workflows, and operational processes. Obligation survives termination.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>7. Digital Evidence</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor acknowledges Company uses CRM records, booking logs, GPS timestamps (where
+                  lawful), and system records. Such digital records may be used as contractual evidence in disputes.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>8. Proportional Breach Structure</h2>
+                <p className="leading-relaxed text-center">
+                  Minor breaches may result in written warning. Material breaches may result in suspension or
+                  termination. Serious misconduct may result in damages and injunctive relief.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>9. Dispute Resolution</h2>
+                <p className="leading-relaxed text-center">
+                  Parties agree to attempt good faith resolution prior to legal proceedings. Unresolved disputes may
+                  proceed in accordance with governing law.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>10. Governing Law</h2>
+                <p className="leading-relaxed text-center">
+                  This Agreement is governed by the laws of England and Wales.
+                </p>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-8 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] text-center">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Independent Contractor Agreement.
+                </p>
+              </div>
+            </>
+          ) : isUS ? (
+            /* --- US: INDEPENDENT CONTRACTOR AGREEMENT --- */
+            <>
+              <section>
+                <h2 className={sectionClass}>1. Independent Contractor Status</h2>
+                <p className="leading-relaxed text-center">
+                  The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
+                  employment, worker, partnership, or agency status. Contractor controls the manner and method of
+                  work and is responsible for all taxes, statutory contributions, and insurance obligations.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>2. Scope of Services</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor shall provide cleaning services as allocated through the Company's booking system.
+                  Contractor retains discretion over how services are performed, subject to agreed service standards.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>3. Reasonable Non-Solicitation</h2>
+                <p className="leading-relaxed text-center">
+                  During engagement and for 6 months following termination, Contractor shall not directly solicit or
+                  accept work from clients personally serviced through the Company. This restriction is limited to
+                  clients directly introduced to Contractor.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
+                <p className="leading-relaxed text-center">
+                  In the event of proven breach of non-solicitation or confidentiality, Contractor agrees to pay {currencySymbol}5,000
+                  as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>5. Revenue Recovery Formula</h2>
+                <p className="leading-relaxed text-center">
+                  If Contractor directly engages a Company client in breach of this Agreement, Contractor shall
+                  compensate Company for 6 months of average revenue generated from that client.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>6. Confidentiality</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor shall keep confidential all client data, pricing structures, CRM systems, automation
+                  workflows, and operational processes. Obligation survives termination.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>7. Digital Evidence</h2>
+                <p className="leading-relaxed text-center">
+                  Contractor acknowledges Company uses CRM records, booking logs, GPS timestamps (where
+                  lawful), and system records. Such digital records may be used as contractual evidence in disputes.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>8. Proportional Breach Structure</h2>
+                <p className="leading-relaxed text-center">
+                  Minor breaches may result in written warning. Material breaches may result in suspension or
+                  termination. Serious misconduct may result in damages and injunctive relief.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>9. Dispute Resolution</h2>
+                <p className="leading-relaxed text-center">
+                  Parties agree to attempt good faith resolution prior to legal proceedings. Unresolved disputes may
+                  proceed in accordance with governing law.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>10. Governing Law</h2>
+                <p className="leading-relaxed text-center">
+                  This Agreement is governed by the laws of the State of ________.
+                </p>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-8 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] text-center">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Independent Contractor Agreement.
+                </p>
+              </div>
+            </>
+          ) : isCanada ? (
+            /* --- CANADA: INDEPENDENT CONTRACTOR AGREEMENT --- */
+            <>
+              <section>
+                <h2 className={sectionClass}>1. Independent Contractor Status</h2>
+                <p className="leading-relaxed text-center mb-4">
+                  1.1 The Contractor is engaged as an independent contractor and not as an employee, agent, partner, or representative of the Company.
+                </p>
+                <p className="leading-relaxed text-center mb-2">
+                  1.2 The Contractor is solely responsible for:
+                </p>
+                <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
+                  <li>Canada Revenue Agency (CRA) filings</li>
+                  <li>Canada Pension Plan (CPP) contributions</li>
+                  <li>Employment Insurance (EI) contributions</li>
+                  <li>GST/HST registration and remittance (where applicable)</li>
+                  <li>Income taxes and other statutory obligations</li>
+                </ul>
+                <p className="leading-relaxed text-center">
+                  1.3 Nothing in this Agreement shall create an employment relationship under the Canada Labour Code or applicable provincial employment standards legislation.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>2. Scope of Services</h2>
+                <p className="leading-relaxed text-center mb-4">
+                  2.1 The Contractor shall provide residential and/or commercial cleaning services as allocated through the Company's booking or scheduling system.
+                </p>
+                <p className="leading-relaxed text-center">
+                  2.2 The Contractor retains control over the manner and method of performing services, subject to agreed quality standards.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>3. Reasonable Non-Solicitation</h2>
+                <p className="leading-relaxed text-center mb-4">
+                  3.1 During the term of this Agreement and for six (6) months following termination, the Contractor shall not directly solicit or accept work from any client personally serviced through the Company.
+                </p>
+                <p className="leading-relaxed text-center">
+                  3.2 This restriction is limited to clients directly introduced to the Contractor by the Company.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>4. Liquidated Damages</h2>
+                <p className="leading-relaxed text-center mb-4">
+                  4.1 In the event of proven breach of Section 3 (Non-Solicitation) or Section 6 (Confidentiality), the Contractor agrees to pay CAD $5,000 as a reasonable pre-estimate of loss.
+                </p>
+                <p className="leading-relaxed text-center">
+                  4.2 The parties agree this amount is compensatory and not punitive.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>5. Revenue Recovery Formula</h2>
+                <p className="leading-relaxed text-center">
+                  If the Contractor directly or indirectly engages a Company client in breach of this Agreement, the Contractor shall compensate the Company for six (6) months of average revenue generated from that client prior to breach.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>6. Confidentiality</h2>
+                <p className="leading-relaxed text-center mb-2">
+                  6.1 The Contractor shall keep strictly confidential:
+                </p>
+                <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
+                  <li>Client identities</li>
+                  <li>Pricing structures</li>
+                  <li>CRM systems</li>
+                  <li>Operational processes</li>
+                  <li>Automation systems</li>
+                  <li>AI workflows</li>
+                  <li>Marketing strategy</li>
+                </ul>
+                <p className="leading-relaxed text-center">
+                  6.2 This obligation survives termination.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>7. Digital Evidence Clause</h2>
+                <p className="leading-relaxed text-center mb-2">
+                  The Contractor acknowledges that the Company uses:
+                </p>
+                <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
+                  <li>CRM logs</li>
+                  <li>Booking records</li>
+                  <li>GPS attendance timestamps (where lawful)</li>
+                  <li>System access logs</li>
+                  <li>Electronic communications</li>
+                </ul>
+                <p className="leading-relaxed text-center">
+                  Such records may be relied upon as contractual evidence in arbitration or court proceedings.
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>8. Proportional Breach Structure</h2>
+                <ul className="list-inside list-disc space-y-2 text-center leading-relaxed">
+                  <li><strong>Minor breach:</strong> Written warning</li>
+                  <li><strong>Material breach:</strong> Suspension or termination</li>
+                  <li><strong>Serious misconduct:</strong> Damages and injunctive relief</li>
+                </ul>
+              </section>
+              <section>
+                <h2 className={sectionClass}>9. Dispute Resolution</h2>
+                <p className="leading-relaxed text-center mb-4">
+                  The Parties agree to attempt good faith resolution prior to legal proceedings.
+                </p>
+                <p className="leading-relaxed text-center">
+                  Unresolved disputes shall proceed in accordance with the laws of the Province of [Insert Province].
+                </p>
+              </section>
+              <section>
+                <h2 className={sectionClass}>10. Governing Law</h2>
+                <p className="leading-relaxed text-center">
+                  This Agreement is governed by the laws of the Province of ________ and the applicable federal laws of Canada.
+                </p>
+              </section>
+              <section className="bg-slate-50 border border-gray-400 p-8 md:p-12 rounded-sm text-center">
+                <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-8 tracking-widest text-center">
+                  Contact Information
+                </h2>
+                <div className="space-y-2 font-bold text-slate-800 text-lg text-center">
+                  <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
+                  <p>Shine & Span Cleaning Services LTD</p>
+                  <p>Email: cleaning@shinespan.co.uk</p>
+                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </section>
+              <div className="text-center pt-10 border-t border-gray-100">
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] text-center">
+                  By engaging with Shine & Span Cleaning Services LTD as a contractor, you acknowledge that you have read and understood this Independent Contractor Agreement.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
           {/* 1. Introduction */}
           <section>
             <h2 className="text-2xl font-black text-[#1e293b] uppercase mb-6 tracking-tight border-b-2 border-gray-100 pb-2 inline-block">
@@ -263,6 +600,8 @@ const TermsAndConditions = () => {
               Conditions.
             </p>
           </div>
+            </>
+          )}
         </div>
       </main>
 
