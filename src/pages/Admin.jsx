@@ -230,6 +230,8 @@ const Admin = () => {
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState("role"); // 'role' | 'date' | 'name_asc' | 'name_desc'
   const [userRoleFilter, setUserRoleFilter] = useState("all"); // 'all' | 'admins' | 'workers' | 'users'
+  const [userDateFrom, setUserDateFrom] = useState("");
+  const [userDateTo, setUserDateTo] = useState("");
   const [refSearch, setRefSearch] = useState("");
   const [refFilterProgress, setRefFilterProgress] = useState(""); // '' | 'working' | 'waiting'
   const [refFilterRewardStatus, setRefFilterRewardStatus] = useState(""); // '' | 'eligible' | 'claimed' | 'pending'
@@ -268,9 +270,25 @@ const Admin = () => {
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // --- Security: validate file type and size ---
+    const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"];
+    const MAX_SIZE_MB = 2;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert("Only image files are allowed (PNG, JPG, GIF, WebP, SVG).");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert(`File too large. Maximum size is ${MAX_SIZE_MB} MB.`);
+      e.target.value = "";
+      return;
+    }
+
     setSaving(true);
     try {
-      const fileName = `logo-${Date.now()}.${file.name.split(".").pop()}`;
+      const safeExt = file.name.split(".").pop().replace(/[^a-zA-Z0-9]/g, "").slice(0, 5);
+      const fileName = `logo-${Date.now()}.${safeExt}`;
       const { error: uploadError } = await supabase.storage.from(BUCKET_LOGO).upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from(BUCKET_LOGO).getPublicUrl(fileName);
@@ -344,6 +362,16 @@ const Admin = () => {
           (u.full_name || "").toLowerCase().includes(q)
       );
     }
+    if (userDateFrom) {
+      const from = new Date(userDateFrom);
+      from.setHours(0, 0, 0, 0);
+      list = list.filter((u) => u.created_at && new Date(u.created_at) >= from);
+    }
+    if (userDateTo) {
+      const to = new Date(userDateTo);
+      to.setHours(23, 59, 59, 999);
+      list = list.filter((u) => u.created_at && new Date(u.created_at) <= to);
+    }
     return [...list].sort((a, b) => {
       const orderA = roleOrder(a);
       const orderB = roleOrder(b);
@@ -356,7 +384,7 @@ const Admin = () => {
         return (b.full_name || b.email || "").localeCompare(a.full_name || a.email || "");
       return 0;
     });
-  }, [users, userSearch, userSort, userRoleFilter, userIdsWithApplications]);
+  }, [users, userSearch, userSort, userRoleFilter, userIdsWithApplications, userDateFrom, userDateTo]);
 
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
@@ -718,6 +746,32 @@ const Admin = () => {
                       <option value="name_desc">Name (Z–A)</option>
                     </select>
                   </div>
+                  <div className="w-full sm:w-44">
+                    <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">From date</label>
+                    <input
+                      type="date"
+                      value={userDateFrom}
+                      onChange={(e) => setUserDateFrom(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#448cff]/30 focus:border-[#448cff]"
+                    />
+                  </div>
+                  <div className="w-full sm:w-44">
+                    <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">To date</label>
+                    <input
+                      type="date"
+                      value={userDateTo}
+                      onChange={(e) => setUserDateTo(e.target.value)}
+                      max={new Date().toISOString().slice(0, 10)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#448cff]/30 focus:border-[#448cff]"
+                    />
+                  </div>
+                  <button
+                    onClick={() => { setUserDateFrom(""); setUserDateTo(""); }}
+                    disabled={!userDateFrom && !userDateTo}
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Clear dates
+                  </button>
                   <button
                     onClick={handleDownloadUsersExcel}
                     disabled={filteredAndSortedUsers.length === 0}

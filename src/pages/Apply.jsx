@@ -20,6 +20,7 @@ import Footer from "../Components/Homecomponents/Footer";
 import { supabase } from "../lib/supabase";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
 import { useAuth } from "../contexts/AuthContext";
+import { rateLimit, sanitizeFormData } from "../lib/security";
 
 const APPLY_REFERRAL_STORAGE_KEY = "apply_referral_ref";
 
@@ -392,6 +393,16 @@ const Apply = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+
+    // Rate limit: max 3 submissions per minute
+    const rl = rateLimit("apply-submit", 3, 60000);
+    if (!rl.allowed) {
+      const secs = Math.ceil(rl.retryAfterMs / 1000);
+      setSubmitError(`Too many attempts. Please wait ${secs} seconds before trying again.`);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+      return;
+    }
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       setSubmitError(validationErrors.join(" "));
@@ -437,10 +448,13 @@ const Apply = () => {
         }
       }
     }
+    // Sanitise all free-text fields before storing
+    const sanitisedForm = sanitizeFormData(formData);
+
     // Approved cleaner can only update availability; keep rest from existing application
     const payloadFormData = availabilityOnlyUpdate
-      ? { ...myApplication.form_data, availability: formData.availability }
-      : { ...formData, email: user.email };
+      ? { ...myApplication.form_data, availability: sanitisedForm.availability }
+      : { ...sanitisedForm, email: user.email };
     const { data: inserted, error } = await supabase
       .from("applications")
       .insert({
@@ -765,18 +779,21 @@ const Apply = () => {
                           value={formData.firstName}
                           onChange={(v) => updateField("firstName", v)}
                           placeholder="John"
+                          maxLength={100}
                         />
                         <InputGroup
                           label="Middle Name"
                           value={formData.middleName}
                           onChange={(v) => updateField("middleName", v)}
                           placeholder="Optional"
+                          maxLength={100}
                         />
                         <InputGroup
                           label="Surname *"
                           value={formData.surname}
                           onChange={(v) => updateField("surname", v)}
                           placeholder="Doe"
+                          maxLength={100}
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -811,6 +828,7 @@ const Apply = () => {
                           inputMode="numeric"
                           placeholder={phonePlaceholder}
                           helper={phoneHelper}
+                          maxLength={20}
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -833,6 +851,7 @@ const Apply = () => {
                           value={formData.postcode}
                           onChange={updatePostcode}
                           placeholder={postcodePlaceholder}
+                          maxLength={12}
                         />
                       </div>
                       <div className="space-y-1">
@@ -846,7 +865,7 @@ const Apply = () => {
                           onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value.trimStart() }))}
                           placeholder={addressPlaceholder}
                           className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] font-medium text-slate-800 placeholder-slate-400"
-                          maxLength={200}
+                          maxLength={500}
                         />
                         <p className="text-xs text-slate-500 font-medium">
                           Your full residential address (street, building, city). Required for your application.
@@ -1237,7 +1256,7 @@ const StepLink = ({ number, label, active }) => (
   </div>
 );
 
-const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputMode, helper }) => (
+const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputMode, helper, maxLength }) => (
   <div className="space-y-2 w-full">
     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
       {label}
@@ -1248,6 +1267,7 @@ const InputGroup = ({ label, placeholder, value, onChange, type = "text", inputM
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      maxLength={maxLength}
       className="w-full p-4 border border-gray-400 rounded-sm outline-none focus:border-[#448cff] transition-all font-bold text-slate-700 bg-white"
     />
     {helper && <p className="text-xs text-slate-500 font-medium">{helper}</p>}

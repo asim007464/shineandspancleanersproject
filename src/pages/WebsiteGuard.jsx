@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, RotateCcw, Lock, Check } from "lucide-react";
+import { ShieldCheck, RotateCcw, Check } from "lucide-react";
+import { rateLimit } from "../lib/security";
 
 const WebsiteGuard = ({ children }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [error, setError] = useState(false);
   const [target, setTarget] = useState({ name: "Vacuum Cleaner", id: 1 });
+  const [shuffledImages, setShuffledImages] = useState([]);
 
   // Cleaning related images
   const images = [
@@ -43,12 +45,19 @@ const WebsiteGuard = ({ children }) => {
   const shuffleTarget = () => {
     const randomImg = images[Math.floor(Math.random() * images.length)];
     setTarget({ name: randomImg.name, id: randomImg.id });
+    setShuffledImages([...images].sort(() => Math.random() - 0.5));
     setSelectedId(null);
     setError(false);
   };
 
   const handleVerify = (e) => {
     e.preventDefault();
+    // Rate limit guard verification attempts
+    const rl = rateLimit("guard-verify", 10, 60000);
+    if (!rl.allowed) {
+      setError(true);
+      return;
+    }
     if (selectedId === target.id) {
       sessionStorage.setItem("site_verified_img", "true");
       setIsVerified(true);
@@ -80,9 +89,9 @@ const WebsiteGuard = ({ children }) => {
         </div>
 
         <form onSubmit={handleVerify} className="space-y-6">
-          {/* Image Grid */}
+          {/* Image Grid — shuffled order to prevent position guessing */}
           <div className="grid grid-cols-2 gap-3">
-            {images.map((img) => (
+            {(shuffledImages.length ? shuffledImages : images).map((img) => (
               <div
                 key={img.id}
                 onClick={() => {

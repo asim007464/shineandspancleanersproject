@@ -4,6 +4,7 @@ import { ArrowLeft, Home as HomeIcon, Loader2, Mail } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
 import { supabase } from "../lib/supabase";
+import { rateLimit } from "../lib/security";
 
 const OTP_COOLDOWN_SECONDS = 60;
 
@@ -79,6 +80,15 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Rate limit: max 3 signups per 2 minutes
+    const rl = rateLimit("signup-submit", 3, 120000);
+    if (!rl.allowed) {
+      const secs = Math.ceil(rl.retryAfterMs / 1000);
+      setError(`Too many attempts. Please wait ${secs} seconds.`);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;

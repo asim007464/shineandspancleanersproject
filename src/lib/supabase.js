@@ -4,15 +4,26 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase: Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file (see .env.example). Restart the dev server after changing .env."
+  console.error(
+    "FATAL: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in your .env file. See .env.example. Restart the dev server after updating."
+  );
+}
+
+if (
+  supabaseUrl.includes("placeholder") ||
+  supabaseUrl.includes("your-project") ||
+  supabaseAnonKey.includes("your-anon")
+) {
+  console.error(
+    "FATAL: Supabase credentials still contain placeholder values. Update .env with real credentials."
   );
 }
 
 /**
- * Supabase client. Requires valid URL and anon key in .env or requests will fail.
+ * Supabase client — will throw on any request if credentials are missing.
+ * Never falls back to placeholder values.
  */
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : createClient("https://placeholder.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIn0.placeholder");
+export const supabase = createClient(
+  supabaseUrl || "https://invalid.supabase.co",
+  supabaseAnonKey || "invalid-key"
+);

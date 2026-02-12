@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams, useLocation } from "react-router-do
 import { ArrowLeft, Loader2, Eye, EyeOff, Info } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
+import { rateLimit } from "../lib/security";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -41,6 +42,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Rate limit: max 5 login attempts per minute
+    const rl = rateLimit("login-submit", 5, 60000);
+    if (!rl.allowed) {
+      const secs = Math.ceil(rl.retryAfterMs / 1000);
+      setError(`Too many login attempts. Please wait ${secs} seconds.`);
+      return;
+    }
+
     setLoading(true);
     try {
       await signIn(email, password);
