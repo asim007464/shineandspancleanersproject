@@ -25,6 +25,7 @@ import {
   Download,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
@@ -89,6 +90,141 @@ function formatAvailability(availability) {
     const slots = [d.s1_start && d.s1_end && `${d.s1_start}–${d.s1_end}`, d.s2_start && d.s2_end && `${d.s2_start}–${d.s2_end}`, d.s3_start && d.s3_end && `${d.s3_start}–${d.s3_end}`].filter(Boolean);
     return { day, slots: slots.length ? slots.join(", ") : "—" };
   });
+}
+
+function generateApplicationPDF(app, referrerProfile) {
+  const fd = app.form_data || {};
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+  let y = 20;
+  const leftM = 20;
+  const lineH = 7;
+  const maxLabelW = 55;
+  const valueX = leftM + maxLabelW;
+  const maxValueW = pageW - valueX - 15;
+
+  const checkPage = (need) => {
+    if (y + need > doc.internal.pageSize.getHeight() - 20) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  // Title
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Application", pageW / 2, y, { align: "center" });
+  y += 10;
+
+  // Status badge
+  const statusText = (app.status || "pending").toUpperCase();
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Status: ${statusText}`, pageW / 2, y, { align: "center" });
+  y += 5;
+
+  // Date
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Applied: ${app.created_at ? new Date(app.created_at).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "N/A"}`, pageW / 2, y, { align: "center" });
+  y += 10;
+
+  // Divider
+  doc.setDrawColor(200);
+  doc.line(leftM, y, pageW - 15, y);
+  y += 8;
+
+  const addSection = (title) => {
+    checkPage(16);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 64, 175);
+    doc.text(title, leftM, y);
+    y += 2;
+    doc.setDrawColor(30, 64, 175);
+    doc.line(leftM, y, leftM + doc.getTextWidth(title), y);
+    y += 6;
+    doc.setTextColor(0, 0, 0);
+  };
+
+  const addRow = (label, value) => {
+    if (!value) return;
+    checkPage(lineH + 2);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(label, leftM, y);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(String(value), maxValueW);
+    doc.text(lines, valueX, y);
+    y += Math.max(lineH, lines.length * 5 + 2);
+  };
+
+  // Personal & Contact
+  addSection("Personal & Contact");
+  addRow("Name:", [fd.firstName, fd.middleName, fd.surname].filter(Boolean).join(" "));
+  addRow("Gender:", fd.gender);
+  addRow("Email:", fd.email);
+  addRow("Phone:", fd.phone);
+  addRow("Postcode:", fd.postcode);
+  addRow("Address:", fd.address);
+  y += 4;
+
+  // Experience
+  addSection("Experience");
+  addRow("Level:", fd.experienceLevel);
+  const expTypes = [...(fd.experienceTypes || []), ...(fd.otherExperienceTypes || [])].filter(Boolean).join(", ");
+  if (expTypes) addRow("Types:", expTypes);
+  y += 4;
+
+  // Eligibility
+  addSection("Eligibility");
+  const elig = fd.eligibility || {};
+  const eligItems = [
+    { key: "workRights", label: "Right to work" },
+    { key: "bankAccount", label: "Bank account" },
+    { key: "selfEmployed", label: "Self-employed" },
+    { key: "cleanRecord", label: "Clean record" },
+  ];
+  eligItems.forEach(({ key, label }) => {
+    addRow(`${label}:`, elig[key] ? "Yes" : "No");
+  });
+  y += 4;
+
+  // Availability
+  const avail = formatAvailability(fd.availability);
+  if (avail && avail.length > 0) {
+    addSection("Availability");
+    avail.forEach(({ day, slots }) => {
+      addRow(`${day}:`, slots);
+    });
+    y += 4;
+  }
+
+  // Referral
+  if (app.referrer_id) {
+    addSection("Referral");
+    if (referrerProfile) {
+      addRow("Referred by:", `${referrerProfile.full_name || referrerProfile.email} (${referrerProfile.email})`);
+    } else {
+      addRow("Referrer ID:", app.referrer_id);
+    }
+    if (fd.referralCode) addRow("Code:", fd.referralCode);
+  }
+
+  // Footer
+  checkPage(20);
+  y += 6;
+  doc.setDrawColor(200);
+  doc.line(leftM, y, pageW - 15, y);
+  y += 6;
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(150);
+  doc.text(`Generated on ${new Date().toLocaleDateString()} — Application ID: ${app.id}`, pageW / 2, y, { align: "center" });
+
+  // Save
+  const applicantName = [fd.firstName, fd.surname].filter(Boolean).join("_") || "applicant";
+  doc.save(`Application_${applicantName}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 function ApplicationDetail({ app, referrerProfile, variant = "current" }) {
@@ -1105,9 +1241,25 @@ const Admin = () => {
                                             Set to Pending
                                           </button>
                                         )}
+                                        <button
+                                          type="button"
+                                          onClick={() => generateApplicationPDF(app, getProfileById(app.referrer_id))}
+                                          className="px-3.5 py-2 rounded-md text-xs font-semibold border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center gap-1.5"
+                                        >
+                                          <Download size={13} /> PDF
+                                        </button>
                                       </div>
                                     ) : (
-                                      <span className="text-slate-500 text-xs">Superseded by current application</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-slate-500 text-xs">Superseded by current application</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => generateApplicationPDF(app, getProfileById(app.referrer_id))}
+                                          className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors flex items-center gap-1"
+                                        >
+                                          <Download size={12} /> PDF
+                                        </button>
+                                      </div>
                                     )}
                                   </div>
                                 );
