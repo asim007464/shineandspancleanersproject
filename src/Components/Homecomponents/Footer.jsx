@@ -164,7 +164,7 @@ const Footer = () => {
                   Location
                 </p>
                 <p className="text-slate-800 font-bold">
-                  22 Watford Road, Wembley, England, HA0 3EP
+                  22 Watford Road, Wembley, <br /> England, HA0 3EP
                 </p>
               </div>
             </div>
