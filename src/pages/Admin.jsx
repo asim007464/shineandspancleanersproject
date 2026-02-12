@@ -22,7 +22,9 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Download,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSiteSettings } from "../contexts/SiteSettingsContext";
@@ -50,9 +52,19 @@ function getUKAllowedPostcodes(locationName) {
   return loc ? loc.postcodes : [];
 }
 
-// Cities by country for Locations filter (admin can only select from these when country is set)
+// UK: 9 target locations (with fixed postcodes) + other cities you can add with custom postcodes
+const UK_ALL_CITIES = [
+  ...UK_LOCATIONS_WITH_POSTCODES.map((l) => l.name),
+  "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Bristol", "Sheffield", "Edinburgh",
+  "Newcastle upon Tyne", "Nottingham", "Leicester", "Southampton", "Brighton", "Belfast", "Cardiff", "Reading",
+  "Plymouth", "Wolverhampton", "Swansea", "Portsmouth", "Milton Keynes", "Aberdeen", "Northampton", "Luton",
+  "Swindon", "York", "Oxford", "Cambridge", "Ipswich", "Norwich", "Exeter", "Cheltenham", "Bournemouth",
+  "Peterborough", "Slough", "Gloucester", "Sunderland", "Derby", "Preston", "Stoke-on-Trent", "Middlesbrough",
+];
+
+// Cities by country for Locations filter
 const CITIES_BY_COUNTRY = {
-  uk: UK_LOCATIONS_WITH_POSTCODES.map((l) => l.name),
+  uk: UK_ALL_CITIES,
   us: [
     "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego",
     "Dallas", "San Jose", "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte", "San Francisco",
@@ -419,12 +431,6 @@ const Admin = () => {
     if (allowed.length === 0) return locations;
     return locations.filter((loc) => allowed.includes(loc.name));
   }, [locations, country]);
-  const wrongCountryLocations = useMemo(() => {
-    const allowed = CITIES_BY_COUNTRY[country] || [];
-    if (allowed.length === 0) return [];
-    return locations.filter((loc) => !allowed.includes(loc.name));
-  }, [locations, country]);
-
   if (authLoading || (!user || !isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -490,6 +496,9 @@ const Admin = () => {
           setLocationFormError(`Select at least one postcode for ${name}.`);
           return;
         }
+      } else if (!postcodes.trim()) {
+        setLocationFormError("Postcodes are required for this location.");
+        return;
       }
     }
     setSaving(true);
@@ -551,24 +560,74 @@ const Admin = () => {
     setLocationFormError("");
   };
 
-  const handleRemoveWrongCountryLocations = async () => {
-    if (wrongCountryLocations.length === 0) return;
-    const countryLabel = country === "uk" ? "UK" : country === "us" ? "US" : "Canadian";
-    if (!window.confirm(`Remove ${wrongCountryLocations.length} location(s) that are not ${countryLabel} cities? This cannot be undone.`)) return;
-    setSaving(true);
-    setLocationFormError("");
-    const allowed = CITIES_BY_COUNTRY[country] || [];
-    try {
-      for (const loc of wrongCountryLocations) {
-        const { error } = await supabase.from("locations").delete().eq("id", loc.id);
-        if (error) throw error;
-      }
-      setLocations((prev) => prev.filter((l) => allowed.includes(l.name)));
-    } catch (e) {
-      setLocationFormError(e.message || "Failed to remove locations.");
-    } finally {
-      setSaving(false);
-    }
+  const downloadExcel = (data, filename) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const handleDownloadUsersExcel = () => {
+    const rows = filteredAndSortedUsers.map((u) => ({
+      Email: u.email || "",
+      Name: u.full_name || "",
+      Role: u.is_main_admin ? "Main admin" : u.role === "admin" ? "Admin" : isWorker(u) ? "Worker" : "User",
+      "Referral Code": u.referral_code || "",
+      "Joined Date": u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
+    }));
+    downloadExcel(rows, "users");
+  };
+
+  const handleDownloadApplicationsExcel = () => {
+    const rows = filteredApplications.map((app) => {
+      const fd = app.form_data || {};
+      return {
+        Name: [fd.firstName, fd.middleName, fd.surname].filter(Boolean).join(" ") || "",
+        Email: fd.email || "",
+        Phone: fd.phone || "",
+        Postcode: fd.postcode || "",
+        Address: fd.address || "",
+        "Experience Level": fd.experienceLevel || "",
+        "Experience Types": (fd.experienceTypes || []).join(", ") || "",
+        Status: app.status || "",
+        "Referral Code": fd.referralCode || "",
+        "Applied Date": app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
+      };
+    });
+    downloadExcel(rows, "applications");
+  };
+
+  const handleDownloadReferralsExcel = () => {
+    const rows = filteredReferrals.map((r) => {
+      const referrer = getProfileById(r.referrer_id);
+      const referredProfile = getProfileById(r.referred_user_id);
+      const app = getAppById(r.referred_application_id);
+      const referredName = referredProfile?.full_name?.trim() ||
+        (app ? `${(app.form_data?.firstName || "")} ${(app.form_data?.surname || "")}`.trim() : "") || "";
+      const referredEmail = referredProfile?.email || app?.form_data?.email || "";
+      const appStatus = r.referred_application_status || app?.status || "";
+      const applicationLabel = appStatus === "approved" ? "Working" : appStatus === "rejected" ? "Rejected" : "Waiting";
+      return {
+        "Referrer Name": referrer?.full_name || "",
+        "Referrer Email": referrer?.email || "",
+        "Referred Name": referredName,
+        "Referred Email": referredEmail,
+        Application: applicationLabel,
+        "Days Worked": r.days_worked ?? 0,
+        "Eligible to Claim": r.reward_eligible_at ? new Date(r.reward_eligible_at).toLocaleDateString() : "",
+        "Reward Status": r.status || "",
+        "Claimed Date": r.reward_claimed_at ? new Date(r.reward_claimed_at).toLocaleDateString() : "",
+      };
+    });
+    downloadExcel(rows, "referrals");
+  };
+
+  const handleDownloadLocationsExcel = () => {
+    const rows = locationsForCountry.map((loc) => ({
+      Location: loc.name || "",
+      Postcodes: loc.postcodes || "",
+    }));
+    downloadExcel(rows, "locations");
   };
 
   const logoSrc = logoUrl || "/websitelogo.png";
@@ -659,6 +718,13 @@ const Admin = () => {
                       <option value="name_desc">Name (Z–A)</option>
                     </select>
                   </div>
+                  <button
+                    onClick={handleDownloadUsersExcel}
+                    disabled={filteredAndSortedUsers.length === 0}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Download size={16} /> Download Excel
+                  </button>
                 </div>
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                   <div className="overflow-x-auto">
@@ -850,7 +916,7 @@ const Admin = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 text-sm">
+                <div className="flex flex-wrap gap-2 text-sm items-center">
                   <button
                     type="button"
                     onClick={() => setExpandUserKey(applicationsByUser.length ? applicationsByUser[0].key : null)}
@@ -864,6 +930,13 @@ const Admin = () => {
                     className="px-3 py-1.5 border border-gray-300 rounded-lg font-bold text-slate-600 hover:bg-slate-50"
                   >
                     Collapse all
+                  </button>
+                  <button
+                    onClick={handleDownloadApplicationsExcel}
+                    disabled={filteredApplications.length === 0}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                  >
+                    <Download size={16} /> Download Excel
                   </button>
                 </div>
 
@@ -1093,6 +1166,13 @@ const Admin = () => {
                       <option value="eligible">Eligible</option>
                       <option value="claimed">Claimed</option>
                     </select>
+                    <button
+                      onClick={handleDownloadReferralsExcel}
+                      disabled={filteredReferrals.length === 0}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Download size={16} /> Download Excel
+                    </button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -1282,11 +1362,10 @@ const Admin = () => {
                     ) : (
                       <input
                         type="text"
-                        placeholder={country === "us" ? "ZIP codes (e.g. 10001, 90210)" : country === "canada" ? "Postal codes (e.g. M5V, K1A)" : country === "uk" ? "Select a location first" : "Postcodes"}
+                        placeholder={country === "us" ? "ZIP codes (e.g. 10001, 90210)" : country === "canada" ? "Postal codes (e.g. M5V, K1A)" : country === "uk" ? "Enter postcodes (e.g. SW1A, E1)" : "Postcodes"}
                         value={locationForm.postcodes}
                         onChange={(e) => setLocationForm((p) => ({ ...p, postcodes: e.target.value }))}
                         className="flex-1 min-w-0 w-full sm:min-w-[200px] px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
-                        readOnly={country === "uk" && CITIES_BY_COUNTRY.uk.length > 0}
                       />
                     )}
                     <div className="flex gap-2 flex-shrink-0">
@@ -1307,22 +1386,13 @@ const Admin = () => {
                     </div>
                   </div>
                   {locationFormError && <p className="text-sm text-red-600 mb-2">{locationFormError}</p>}
-                  {wrongCountryLocations.length > 0 && (
-                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm text-amber-800 font-medium mb-2">
-                        {wrongCountryLocations.length} saved location(s) are not {country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} cities. They are hidden below. Remove them from the database to clean up.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleRemoveWrongCountryLocations}
-                        disabled={saving}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700 disabled:opacity-70"
-                      >
-                        <Trash2 size={16} />
-                        Remove {wrongCountryLocations.length} non-{country === "uk" ? "UK" : country === "us" ? "US" : "Canadian"} location(s)
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    onClick={handleDownloadLocationsExcel}
+                    disabled={locationsForCountry.length === 0}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-3"
+                  >
+                    <Download size={16} /> Download Excel
+                  </button>
                 </div>
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                   {locationsLoading ? (
