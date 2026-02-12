@@ -362,7 +362,8 @@ const Admin = () => {
   const [appFilterStatus, setAppFilterStatus] = useState("");
   const [appFilterExperience, setAppFilterExperience] = useState("");
   const [appFilterEligibility, setAppFilterEligibility] = useState("");
-  const [appFilterDate, setAppFilterDate] = useState("");
+  const [appFilterDateFrom, setAppFilterDateFrom] = useState("");
+  const [appFilterDateTo, setAppFilterDateTo] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState("role"); // 'role' | 'date' | 'name_asc' | 'name_desc'
   const [userRoleFilter, setUserRoleFilter] = useState("all"); // 'all' | 'admins' | 'workers' | 'users'
@@ -542,10 +543,19 @@ const Admin = () => {
         const e = fd.eligibility || {};
         if (!e.workRights && !e.bankAccount && !e.selfEmployed && !e.cleanRecord) return false;
       }
-      if (appFilterDate && new Date(app.created_at).toISOString().slice(0, 10) !== appFilterDate) return false;
+      if (appFilterDateFrom) {
+        const from = new Date(appFilterDateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (!app.created_at || new Date(app.created_at) < from) return false;
+      }
+      if (appFilterDateTo) {
+        const to = new Date(appFilterDateTo);
+        to.setHours(23, 59, 59, 999);
+        if (!app.created_at || new Date(app.created_at) > to) return false;
+      }
       return true;
     });
-  }, [applications, appFilterName, appFilterPostcode, appFilterPhone, appFilterStatus, appFilterExperience, appFilterEligibility, appFilterDate]);
+  }, [applications, appFilterName, appFilterPostcode, appFilterPhone, appFilterStatus, appFilterExperience, appFilterEligibility, appFilterDateFrom, appFilterDateTo]);
 
   const filteredReferrals = useMemo(() => {
     let list = referrals || [];
@@ -1072,11 +1082,21 @@ const Admin = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">Date</label>
+                      <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">From date</label>
                       <input
                         type="date"
-                        value={appFilterDate}
-                        onChange={(e) => setAppFilterDate(e.target.value)}
+                        value={appFilterDateFrom}
+                        onChange={(e) => setAppFilterDateFrom(e.target.value)}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#448cff]/30 focus:border-[#448cff]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">To date</label>
+                      <input
+                        type="date"
+                        value={appFilterDateTo}
+                        onChange={(e) => setAppFilterDateTo(e.target.value)}
+                        max={new Date().toISOString().slice(0, 10)}
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#448cff]/30 focus:border-[#448cff]"
                       />
                     </div>
@@ -1090,7 +1110,8 @@ const Admin = () => {
                           setAppFilterStatus("");
                           setAppFilterExperience("");
                           setAppFilterEligibility("");
-                          setAppFilterDate("");
+                          setAppFilterDateFrom("");
+                          setAppFilterDateTo("");
                         }}
                         className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 flex-1"
                       >
