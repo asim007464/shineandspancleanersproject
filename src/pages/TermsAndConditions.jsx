@@ -62,7 +62,7 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>1. Independent Contractor Status</h2>
                 <p className="leading-relaxed text-center">
                   The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
-                  employment, worker, partnership, or agency status. The contractor controls the manner and method of
+                  employment, worker, partnership, or agency status. <i>The contractor</i> controls the manner and method of
                   work and is responsible for all taxes, statutory contributions, and insurance obligations.
                 </p>
               </section>
@@ -70,7 +70,7 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>2. Scope of Services</h2>
                 <p className="leading-relaxed text-center">
                   Contractor shall provide cleaning services as allocated through the company's booking system.
-                  The contractor retains discretion over how services are performed, subject to agreed service standards.
+                  <i>The contractor</i> retains discretion over how services are performed, subject to agreed service standards.
                 </p>
               </section>
               <section>
@@ -84,7 +84,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
                 <p className="leading-relaxed text-center">
-                  In the event of a proven breach of non-solicitation or confidentiality, the contractor agrees to pay {currencySymbol}5,000
+                  In the event of <i>a proven</i> breach of non-solicitation or confidentiality, <i>the contractor</i> agrees to pay {currencySymbol}5,000
                   as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
                 </p>
               </section>
@@ -154,7 +154,7 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>1. Independent Contractor Status</h2>
                 <p className="leading-relaxed text-center">
                   The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
-                  employment, worker, partnership, or agency status. The contractor controls the manner and method of
+                  employment, worker, partnership, or agency status. <i>The contractor</i> controls the manner and method of
                   work and is responsible for all taxes, statutory contributions, and insurance obligations.
                 </p>
               </section>
@@ -162,7 +162,7 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>2. Scope of Services</h2>
                 <p className="leading-relaxed text-center">
                   Contractor shall provide cleaning services as allocated through the company's booking system.
-                  The contractor retains discretion over how services are performed, subject to agreed service standards.
+                  <i>The contractor</i> retains discretion over how services are performed, subject to agreed service standards.
                 </p>
               </section>
               <section>
@@ -176,7 +176,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
                 <p className="leading-relaxed text-center">
-                  In the event of a proven breach of non-solicitation or confidentiality, the contractor agrees to pay {currencySymbol}5,000
+                  In the event of <i>a proven</i> breach of non-solicitation or confidentiality, <i>the contractor</i> agrees to pay {currencySymbol}5,000
                   as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
                 </p>
               </section>
@@ -245,10 +245,10 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>1. Independent Contractor Status</h2>
                 <p className="leading-relaxed text-center mb-4">
-                  1.1 The Contractor is engaged as an independent contractor and not as an employee, agent, partner, or representative of the Company.
+                  1.1 <i>The Contractor</i> is engaged as an independent contractor and not as an employee, agent, partner, or representative of the Company.
                 </p>
                 <p className="leading-relaxed text-center mb-2">
-                  1.2 The Contractor is solely responsible for:
+                  1.2 <i>The Contractor</i> is solely responsible for:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
                   <li>Canada Revenue Agency (CRA) filings</li>
@@ -264,25 +264,25 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>2. Scope of Services</h2>
                 <p className="leading-relaxed text-center mb-4">
-                  2.1 The Contractor shall provide residential and/or commercial cleaning services as allocated through the Company's booking or scheduling system.
+                  2.1 <i>The Contractor</i> shall provide residential and/or commercial cleaning services as allocated through the Company's booking or scheduling system.
                 </p>
                 <p className="leading-relaxed text-center">
-                  2.2 The Contractor retains control over the manner and method of performing services, subject to agreed quality standards.
+                  2.2 <i>The Contractor</i> retains control over the manner and method of performing services, subject to agreed quality standards.
                 </p>
               </section>
               <section>
                 <h2 className={sectionClass}>3. Reasonable Non-Solicitation</h2>
                 <p className="leading-relaxed text-center mb-4">
-                  3.1 During the term of this Agreement and for six (6) months following termination, the Contractor shall not directly solicit or accept work from any client personally serviced through the Company.
+                  3.1 During the term of this Agreement and for six (6) months following termination, <i>the Contractor</i> shall not directly solicit or accept work from any client personally serviced through the Company.
                 </p>
                 <p className="leading-relaxed text-center">
-                  3.2 This restriction is limited to clients directly introduced to the Contractor by the Company.
+                  3.2 This restriction is limited to clients directly introduced to <i>the Contractor</i> by the Company.
                 </p>
               </section>
               <section>
                 <h2 className={sectionClass}>4. Liquidated Damages</h2>
                 <p className="leading-relaxed text-center mb-4">
-                  4.1 In the event of proven breach of Section 3 (Non-Solicitation) or Section 6 (Confidentiality), the Contractor agrees to pay CAD $5,000 as a reasonable pre-estimate of loss.
+                  4.1 In the event of proven breach of Section 3 (Non-Solicitation) or Section 6 (Confidentiality), <i>the Contractor</i> agrees to pay CAD $5,000 as a reasonable pre-estimate of loss.
                 </p>
                 <p className="leading-relaxed text-center">
                   4.2 The parties agree this amount is compensatory and not punitive.
@@ -291,13 +291,13 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>5. Revenue Recovery Formula</h2>
                 <p className="leading-relaxed text-center">
-                  If the Contractor directly or indirectly engages a Company client in breach of this Agreement, the Contractor shall compensate the Company for six (6) months of average revenue generated from that client prior to breach.
+                  If <i>the Contractor</i> directly or indirectly engages a Company client in breach of this Agreement, <i>the Contractor</i> shall compensate the Company for six (6) months of average revenue generated from that client prior to breach.
                 </p>
               </section>
               <section>
                 <h2 className={sectionClass}>6. Confidentiality</h2>
                 <p className="leading-relaxed text-center mb-2">
-                  6.1 The Contractor shall keep strictly confidential:
+                  6.1 <i>The Contractor</i> shall keep strictly confidential:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
                   <li>Client identities</li>
@@ -315,7 +315,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>7. Digital Evidence Clause</h2>
                 <p className="leading-relaxed text-center mb-2">
-                  The Contractor acknowledges that the Company uses:
+                  <i>The Contractor</i> acknowledges that the Company uses:
                 </p>
                 <ul className="list-inside list-disc space-y-1 text-center leading-relaxed mb-4">
                   <li>CRM logs</li>

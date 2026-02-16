@@ -61,10 +61,10 @@ const Home = () => {
                 Excellence
               </h3>
               <p className="text-gray-300 leading-relaxed">
-                We strive to deliver exceptional cleaning services on every job,
-                without exception. We expect all work to be conducted thoroughly
+                We strive to deliver exceptional cleaning services on every job,{" "}
+                <i>without exception. We expect all work to be conducted thoroughly
                 and accurately, adhering to our established standards during
-                each visit. Anything less is unacceptable.
+                each visit. Anything less is unacceptable.</i>
               </p>
             </div>
 
@@ -74,8 +74,8 @@ const Home = () => {
                 Precision
               </h3>
               <p className="text-gray-300 leading-relaxed">
-                Attention to detail matters. Corners, edges, and
-                often-overlooked areas are just as important. We
+                Attention to detail matters. Corners, edges, and{" "}
+                <i>often-overlooked areas are just as important</i>. We
                 expect cleaners to take responsibility for the quality of their
                 work and to complete each job properly the first time.
               </p>

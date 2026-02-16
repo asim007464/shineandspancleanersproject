@@ -36,8 +36,8 @@ const About = () => {
           {/* Description: Matching the font size and color from your screenshot */}
           <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto opacity-90">
             Are you a dedicated cleaning professional with a passion for
-            excellence? We are seeking energetic and reliable self-employed
-            cleaners to join our progressive team across{" "}
+            excellence? We are seeking energetic and reliable{" "}
+            <i>self-employed cleaners</i> to join our progressive team across{" "}
             {location}
             {locationPostcodes ? ` (${locationPostcodes})` : ""}.
           </p>
@@ -102,8 +102,8 @@ const About = () => {
                   eco-friendly products. Professional conduct, punctuality, and
                   reliability are required at all times. Contractors are fully
                   accountable for the quality of their work, including
-                  correcting any deficiencies. Contractors who consistently meet
-                  <i>quality expectations</i> and demonstrate pride in their
+                  correcting any deficiencies. Contractors who consistently{" "}
+                  <i>meet quality expectations</i> and demonstrate pride in their
                   work are prioritized for ongoing assignments. Work that fails
                   to meet expectations is documented and addressed. Continued
                   substandard performance will result in removal from active
@@ -126,12 +126,12 @@ const About = () => {
             <InfoCard
               icon={<Wallet size={24} />}
               title="Top Pay"
-              desc={`Up to ${currencySymbol}800/week + tips. Get paid the same day you do cleaning.`}
+              desc={<><i>Up to {currencySymbol}800/week</i> + tips. Get paid the same day you do cleaning.</>}
             />
             <InfoCard
               icon={<Dumbbell size={24} />}
               title="Gym Access"
-              desc="Enjoy great perks, including a free gym membership to stay healthy."
+              desc={<>Enjoy great <i>perks, including</i> a free gym membership to stay healthy.</>}
             />
             <InfoCard
               icon={<Clock size={24} />}

@@ -755,16 +755,25 @@ const Admin = () => {
   const handleDownloadApplicationsExcel = () => {
     const rows = filteredApplications.map((app) => {
       const fd = app.form_data || {};
+      const elig = fd.eligibility || {};
       return {
-        Name: [fd.firstName, fd.middleName, fd.surname].filter(Boolean).join(" ") || "",
+        "First Name": fd.firstName || "",
+        "Middle Name": fd.middleName || "",
+        Surname: fd.surname || "",
         Email: fd.email || "",
         Phone: fd.phone || "",
-        Postcode: fd.postcode || "",
+        "Post Code": fd.postcode || "",
         Address: fd.address || "",
+        Gender: fd.gender || "",
         "Experience Level": fd.experienceLevel || "",
         "Experience Types": (fd.experienceTypes || []).join(", ") || "",
-        Status: app.status || "",
+        "Other Experience": (fd.otherExperienceTypes || []).join(", ") || "",
+        "Right to Work": elig.workRights || "",
+        "Bank Account": elig.bankAccount || "",
+        "Self Employed": elig.selfEmployed || "",
+        "Clean Record": elig.cleanRecord || "",
         "Referral Code": fd.referralCode || "",
+        Status: app.status || "",
         "Applied Date": app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
       };
     });
@@ -797,9 +806,11 @@ const Admin = () => {
   };
 
   const handleDownloadLocationsExcel = () => {
+    const countryLabel = country === "uk" ? "United Kingdom" : country === "us" ? "United States" : country === "canada" ? "Canada" : country || "";
     const rows = locationsForCountry.map((loc) => ({
+      Country: countryLabel,
       Location: loc.name || "",
-      Postcodes: loc.postcodes || "",
+      Postcode: loc.postcodes || "",
     }));
     downloadExcel(rows, "locations");
   };
