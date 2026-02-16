@@ -753,25 +753,41 @@ const Admin = () => {
   };
 
   const handleDownloadApplicationsExcel = () => {
+    const formatDay = (day) => {
+      if (!day || !day.enabled) return "Not Available";
+      const slots = [];
+      if (day.s1_start && day.s1_end) slots.push(`${day.s1_start}-${day.s1_end}`);
+      if (day.s2_start && day.s2_end) slots.push(`${day.s2_start}-${day.s2_end}`);
+      if (day.s3_start && day.s3_end) slots.push(`${day.s3_start}-${day.s3_end}`);
+      return slots.length > 0 ? slots.join(", ") : "Available (no times set)";
+    };
     const rows = filteredApplications.map((app) => {
       const fd = app.form_data || {};
       const elig = fd.eligibility || {};
+      const avail = fd.availability || {};
       return {
         "First Name": fd.firstName || "",
         "Middle Name": fd.middleName || "",
         Surname: fd.surname || "",
         Email: fd.email || "",
         Phone: fd.phone || "",
+        Gender: fd.gender || "",
         "Post Code": fd.postcode || "",
         Address: fd.address || "",
-        Gender: fd.gender || "",
         "Experience Level": fd.experienceLevel || "",
         "Experience Types": (fd.experienceTypes || []).join(", ") || "",
         "Other Experience": (fd.otherExperienceTypes || []).join(", ") || "",
-        "Right to Work": elig.workRights || "",
-        "Bank Account": elig.bankAccount || "",
-        "Self Employed": elig.selfEmployed || "",
-        "Clean Record": elig.cleanRecord || "",
+        "Right to Work": elig.workRights ? "Yes" : "No",
+        "Bank Account": elig.bankAccount ? "Yes" : "No",
+        "Self Employed": elig.selfEmployed ? "Yes" : "No",
+        "Clean Record": elig.cleanRecord ? "Yes" : "No",
+        "Monday": formatDay(avail.Monday),
+        "Tuesday": formatDay(avail.Tuesday),
+        "Wednesday": formatDay(avail.Wednesday),
+        "Thursday": formatDay(avail.Thursday),
+        "Friday": formatDay(avail.Friday),
+        "Saturday": formatDay(avail.Saturday),
+        "Sunday": formatDay(avail.Sunday),
         "Referral Code": fd.referralCode || "",
         Status: app.status || "",
         "Applied Date": app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
