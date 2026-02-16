@@ -37,7 +37,7 @@ const About = () => {
           <p className="text-slate-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto opacity-90">
             Are you a dedicated cleaning professional with a passion for
             excellence? We are seeking energetic and reliable self-employed
-            <i>Cleaners</i> to join our progressive team <i>across</i>{" "}
+            cleaners to join our progressive team across{" "}
             {location}
             {locationPostcodes ? ` (${locationPostcodes})` : ""}.
           </p>
@@ -126,12 +126,12 @@ const About = () => {
             <InfoCard
               icon={<Wallet size={24} />}
               title="Top Pay"
-              desc={`Upto ${currencySymbol}800/week + tips. Get paid the same day you do cleaning.`}
+              desc={`Up to ${currencySymbol}800/week + tips. Get paid the same day you do cleaning.`}
             />
             <InfoCard
               icon={<Dumbbell size={24} />}
               title="Gym Access"
-              desc="Enjoy great perks including a free gym membership to stay healthy."
+              desc="Enjoy great perks, including a free gym membership to stay healthy."
             />
             <InfoCard
               icon={<Clock size={24} />}

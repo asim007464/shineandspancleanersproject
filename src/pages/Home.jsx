@@ -25,7 +25,7 @@ const Home = () => {
           <p className="text-gray-400 text-lg md:text-xl font-medium leading-relaxed mb-12 max-w-3xl mx-auto">
             Join a progressive cleaning company expanding across {location}. We
             offer flexible daytime hours and the chance to work independently
-            while feeling supported by a great team.
+            while feeling supported by a fantastic team.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
@@ -61,9 +61,10 @@ const Home = () => {
                 Excellence
               </h3>
               <p className="text-gray-300 leading-relaxed">
-                We strive to deliver exceptional cleaning on every job, every
-                time. We expect work to be done thoroughly, correctly, and to
-                our standards at every visit. Anything less is not acceptable.
+                We strive to deliver exceptional cleaning services on every job,
+                without exception. We expect all work to be conducted thoroughly
+                and accurately, adhering to our established standards during
+                each visit. Anything less is unacceptable.
               </p>
             </div>
 
@@ -73,8 +74,8 @@ const Home = () => {
                 Precision
               </h3>
               <p className="text-gray-300 leading-relaxed">
-                Attention to detail matters. Corners, edges, and{" "}
-                <i>often overlooked areas areas are just as important</i> . We
+                Attention to detail matters. Corners, edges, and
+                often-overlooked areas are just as important. We
                 expect cleaners to take responsibility for the quality of their
                 work and to complete each job properly the first time.
               </p>

@@ -62,15 +62,15 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>1. Independent Contractor Status</h2>
                 <p className="leading-relaxed text-center">
                   The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
-                  employment, worker, partnership, or agency status. Contractor controls the manner and method of
+                  employment, worker, partnership, or agency status. The contractor controls the manner and method of
                   work and is responsible for all taxes, statutory contributions, and insurance obligations.
                 </p>
               </section>
               <section>
                 <h2 className={sectionClass}>2. Scope of Services</h2>
                 <p className="leading-relaxed text-center">
-                  Contractor shall provide cleaning services as allocated through the Company's booking system.
-                  Contractor retains discretion over how services are performed, subject to agreed service standards.
+                  Contractor shall provide cleaning services as allocated through the company's booking system.
+                  The contractor retains discretion over how services are performed, subject to agreed service standards.
                 </p>
               </section>
               <section>
@@ -84,7 +84,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
                 <p className="leading-relaxed text-center">
-                  In the event of proven breach of non-solicitation or confidentiality, Contractor agrees to pay {currencySymbol}5,000
+                  In the event of a proven breach of non-solicitation or confidentiality, the contractor agrees to pay {currencySymbol}5,000
                   as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
                 </p>
               </section>
@@ -112,7 +112,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>8. Proportional Breach Structure</h2>
                 <p className="leading-relaxed text-center">
-                  Minor breaches may result in written warning. Material breaches may result in suspension or
+                  Minor breaches may result in written warnings. Material breaches may result in suspension or
                   termination. Serious misconduct may result in damages and injunctive relief.
                 </p>
               </section>
@@ -137,7 +137,7 @@ const TermsAndConditions = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -154,15 +154,15 @@ const TermsAndConditions = () => {
                 <h2 className={sectionClass}>1. Independent Contractor Status</h2>
                 <p className="leading-relaxed text-center">
                   The Contractor is engaged as an independent contractor. Nothing in this Agreement creates
-                  employment, worker, partnership, or agency status. Contractor controls the manner and method of
+                  employment, worker, partnership, or agency status. The contractor controls the manner and method of
                   work and is responsible for all taxes, statutory contributions, and insurance obligations.
                 </p>
               </section>
               <section>
                 <h2 className={sectionClass}>2. Scope of Services</h2>
                 <p className="leading-relaxed text-center">
-                  Contractor shall provide cleaning services as allocated through the Company's booking system.
-                  Contractor retains discretion over how services are performed, subject to agreed service standards.
+                  Contractor shall provide cleaning services as allocated through the company's booking system.
+                  The contractor retains discretion over how services are performed, subject to agreed service standards.
                 </p>
               </section>
               <section>
@@ -176,7 +176,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>4. Liquidated Damages (Reasonable Estimate)</h2>
                 <p className="leading-relaxed text-center">
-                  In the event of proven breach of non-solicitation or confidentiality, Contractor agrees to pay {currencySymbol}5,000
+                  In the event of a proven breach of non-solicitation or confidentiality, the contractor agrees to pay {currencySymbol}5,000
                   as a reasonable pre-estimate of loss. This amount is compensatory, not punitive.
                 </p>
               </section>
@@ -204,7 +204,7 @@ const TermsAndConditions = () => {
               <section>
                 <h2 className={sectionClass}>8. Proportional Breach Structure</h2>
                 <p className="leading-relaxed text-center">
-                  Minor breaches may result in written warning. Material breaches may result in suspension or
+                  Minor breaches may result in written warnings. Material breaches may result in suspension or
                   termination. Serious misconduct may result in damages and injunctive relief.
                 </p>
               </section>
@@ -229,7 +229,7 @@ const TermsAndConditions = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -359,7 +359,7 @@ const TermsAndConditions = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -587,7 +587,7 @@ const TermsAndConditions = () => {
               </p>
               <p>Shine & Span Cleaning Services LTD</p>
               <p>Email: cleaning@shinespan.co.uk</p>
-              <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+              <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
               <p>Address: [Your Business Address]</p>
             </div>
           </section>

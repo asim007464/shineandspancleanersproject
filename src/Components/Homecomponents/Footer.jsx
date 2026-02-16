@@ -57,7 +57,7 @@ const Footer = () => {
           <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm font-medium">
             {location}
             {locationPostcodes ? ` (${locationPostcodes})` : ""}'s premier
-            platform for cleaning professionals. <i>offering</i>
+            platform for cleaning professionals. Offering
             flexible hours, top industry pay, and a supportive community for our
             self-employed team members.
           </p>
@@ -151,7 +151,7 @@ const Footer = () => {
                 </p>
                 <p className="text-slate-800 font-bold hover:text-[#448cff] cursor-pointer transition-colors">
                   0738 464 7705{" "}
-                  <span className="text-[12px]">(from 1pm till 7pm)</span>
+                  <span className="text-[12px]">(Available from 1 PM to 7 PM)</span>
                 </p>
               </div>
             </div>

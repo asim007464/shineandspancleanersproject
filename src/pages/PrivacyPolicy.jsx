@@ -108,7 +108,7 @@ const PrivacyPolicy = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -169,7 +169,7 @@ const PrivacyPolicy = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -252,7 +252,7 @@ const PrivacyPolicy = () => {
                   <p className="text-[#448cff] uppercase text-xs tracking-[0.2em] mb-2 font-black text-center">Get in Touch</p>
                   <p>Shine & Span Cleaning Services LTD</p>
                   <p>Email: cleaning@shinespan.co.uk</p>
-                  <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+                  <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
               </section>
@@ -296,7 +296,7 @@ const PrivacyPolicy = () => {
             <ul className="list-disc pl-8 space-y-2 font-bold text-slate-800">
               <li>Company Name: Shine & Span Cleaning Services LTD</li>
               <li>Email: privacy@Shine & Span Cleaning Services LTD.co.uk</li>
-              <li>Phone: 0738 464 7705 (from 1pm till 7pm)</li>
+              <li>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</li>
               <li>Address: [Your Business Address]</li>
             </ul>
           </section>
@@ -581,7 +581,7 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="mt-2 text-sm space-y-1">
                 <li>Email: privacy@Shine & Span Cleaning Services LTD.co.uk</li>
-                <li>Phone: 0738 464 7705 (from 1pm till 7pm)</li>
+                <li>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</li>
               </ul>
               <p className="mt-4 text-[11px] uppercase tracking-widest text-slate-400">
                 We will respond to your request within 30 days.
@@ -752,7 +752,7 @@ const PrivacyPolicy = () => {
               </p>
               <p>Shine & Span Cleaning Services LTD</p>
               <p>Email: cleaning@shinespan.co.uk</p>
-              <p>Phone: 0738 464 7705 (from 1pm till 7pm)</p>
+              <p>Phone: 0738 464 7705 (Available from 1 PM to 7 PM)</p>
               <p>Address: [Your Business Address]</p>
             </div>
 

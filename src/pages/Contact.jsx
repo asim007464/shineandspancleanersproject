@@ -8,7 +8,7 @@ const Contact = () => {
     {
       title: "Phone",
       value: "0738 464 7705",
-      sub: "from 1pm till 7pm",
+      sub: "Available from 1 PM to 7 PM",
       btn: "Call Now",
       icon: (
         <svg
